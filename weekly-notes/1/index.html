@@ -1,0 +1,138 @@
+<html>
+<base href="https://balazs.kutilovi.cz/">
+<link rel="canonical" href="https://balazs.kutilovi.cz/weekly-notes/1/">
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+
+<title>Weekly notes #1</title>
+
+
+
+<style>
+body {
+  max-width: 620px;
+  padding: 2em;
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 1.5em auto;
+}
+
+blockquote {
+  padding-left: 1.5em;
+  border-left: 3px #ddd solid;
+}
+
+nav {
+  margin: 0 0 1.5em 0;
+}
+
+footer {
+  margin: 1.5em 0 0 0;
+}
+
+p>code, pre, .highlight {
+  font-size: 16px;
+  border: 1px solid #f0f0f0;
+  padding: 0 0.5em;
+  overflow-y: scroll;
+}
+</style>
+
+<body><header>
+  <nav>
+    <a href="https://balazs.kutilovi.cz/" title="Home">Home</a>
+    
+    <a href="/posts/" title=""></a>
+    
+    <a href="/about/" title="">About</a>
+    
+    <a href="/weekly-notes/" title="">Weekly notes</a>
+    
+  <nav>
+</header>
+<main>
+    <article>
+      <h1> Weekly notes #1 </h1>
+
+      <p></p>
+
+<p>Ruby, systems, performance, and programming links from last week.</p>
+
+<h2 id="videos">Videos</h2>
+
+<p><a href="https://www.youtube.com/watch?v=r0UjXixkBV8">RubyConf 2016 - Methods of Memory Management in MRI by Aaron Patterson - YouTube</a></p>
+
+<p>How Ruby generational incremental GC works, what are some of the challenges in
+doing that correctly with respect to pointers across generations and how write
+barriers solve that. Some GC and heap inspection tricks in the last 10 minutes
+and work Aaron is doing at GitHub on
+<a href="https://github.com/github/ruby/pull/33">inspecting</a> and
+<a href="https://github.com/github/ruby/pull/32">reducing</a> heap fragmentation,</p>
+
+<p><a href="https://www.youtube.com/watch?v=yCBUsd52a3s">LoneStarRuby 2015 - My Dog Taught Me to Code by Dave Thomas - YouTube</a></p>
+
+<p>Dave Thomas shares some points on writing maintainable code. I don&rsquo;t agree with
+some of those imperatives, but hey, whatever works for him.</p>
+
+<h3 id="systems-we-love">Systems we love</h3>
+
+<p><a href="https://www.youtube.com/watch?v=TPe6UXMDMGM&amp;feature=youtu.be&amp;t=10626">How Apollo Guidance Computer works</a>. Real-time
+computer from the 60&rsquo;s. Uses core rope memory a.k.a <a href="https://en.wikipedia.org/wiki/Core_rope_memory">LOL
+memory</a>, has interrupts,
+several programmable clocks with different precision and some funny
+trade-offs and bugs!</p>
+
+<p><a href="https://www.youtube.com/watch?v=TPe6UXMDMGM&amp;t=8686s">Less Ado About NTP</a> An
+excellent overview of how NTP and algorithm that drives it works.
+There&rsquo;s a consensus protocol in there, from before it was cool!</p>
+
+<p><a href="https://www.youtube.com/watch?v=TPe6UXMDMGM&amp;t=8686s">Man, &lsquo;splained - 40+ years
+of man page
+history</a>.
+Interesting to see that the UNIX manual started as an actual dead-trees book.
+<a href="https://truss.works/blog/2016/12/9/man-splained">Here&rsquo;s a blog post written to support that talk</a>.</p>
+
+<h2 id="articles">Articles</h2>
+
+<p><a href="https://www.prod.facebook.com/notes/kent-beck/mastering-programming/1184427814923414">Mastering Programming</a></p>
+
+<p>Kent Beck&rsquo;s guidelines for managing time, information and risk while problem
+solving (IMHO not just programming). Mostly about deconstructing problems, and
+juggling them in time and space until it&rsquo;s easy to make a change that
+solves them. And measuring the state before and after. Interesting point
+about <a href="https://www.facebook.com/notes/kent-beck/fresh-work-80155/1186004658099063">80/15/5 rule</a>.</p>
+
+<p><a href="http://slides.com/sylvainpv/xchars-js/#/">Xchars.js by sylvainpv</a></p>
+
+<p>Eval any JS code using six chars. Can you do better and break the wall-of-six?</p>
+
+<p><a href="https://dzone.com/articles/next-generation-linux-tracing">Next Generation Linux Tracing With BPF - DZone Performance</a></p>
+
+<p><a href="http://www.brendangregg.com/blog/2016-10-12/linux-bcc-nodejs-usdt.html">Linux bcc/BPF Node.js USDT Tracing</a></p>
+
+<p>With extended Berkeley packet filter (eBPF) and <code>bcc</code> toolkit, DTrace-like
+kernel and user space tracing is finally getting into Linux. Yay! Now is the time
+to push tools like <a href="https://github.com/wkz/ply">ply</a>, so that developers and sysadmins
+do not have to write tracing programs in <code>bcc</code>. Another front to tackle is the ability to
+add BPF probes in userspace applications, effectively enabling runtime tracing
+of (Ruby) code.</p>
+    </article>
+    </main><footer>
+  
+  <nav>
+    
+
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/weekly-notes/2/">Weekly notes #2 &raquo;</a>
+    
+  </nav>
+  
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,114 @@
+<html>
+<base href="https://balazs.kutilovi.cz/">
+<link rel="canonical" href="https://balazs.kutilovi.cz/weekly-notes/10/">
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+
+<title>Weekly notes #10</title>
+
+
+
+<style>
+body {
+  max-width: 620px;
+  padding: 2em;
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 1.5em auto;
+}
+
+blockquote {
+  padding-left: 1.5em;
+  border-left: 3px #ddd solid;
+}
+
+nav {
+  margin: 0 0 1.5em 0;
+}
+
+footer {
+  margin: 1.5em 0 0 0;
+}
+
+p>code, pre, .highlight {
+  font-size: 16px;
+  border: 1px solid #f0f0f0;
+  padding: 0 0.5em;
+  overflow-y: scroll;
+}
+</style>
+
+<body><header>
+  <nav>
+    <a href="https://balazs.kutilovi.cz/" title="Home">Home</a>
+    
+    <a href="/posts/" title=""></a>
+    
+    <a href="/about/" title="">About</a>
+    
+    <a href="/weekly-notes/" title="">Weekly notes</a>
+    
+  <nav>
+</header>
+<main>
+    <article>
+      <h1> Weekly notes #10 </h1>
+
+      <p>On destructuring, how constant lookup works in Ruby, approaches to
+distributed cache invalidations and how to write a good commit message.
+</p>
+
+<p>Ruby, systems, performance, and programming links from last week.</p>
+
+<h2 id="ruby">Ruby</h2>
+
+<p><a href="https://www.ruby-lang.org/en/news/2017/04/01/support-of-ruby-2-1-has-ended/">Support of Ruby 2.1 has ended</a>. Time to upgrade.</p>
+
+<p><a href="http://tony.pitluga.com/2011/08/08/destructuring-with-ruby.html">Destructuring with Ruby</a>, not only for arrays and hashes.</p>
+
+<p><a href="http://cirw.in/blog/constant-lookup.html">Everything you ever wanted to know about constant lookup in Ruby</a>. &ldquo;Constant lookup searches for constants that are defined in Module.nesting,  Module.nesting.first.ancestors, and Object.ancestors if Module.nesting.first is nil or a module&rdquo;. The post translates previous sentence from Latin to simple English.</p>
+
+<p><a href="https://github.com/redding/much-timeout">IO.select based timeouts</a>. MRI
+Ruby still needs to resolve the
+Timeout-exception-can-be-raised-anywhere-across-threads-too issue,
+though.</p>
+
+<h2 id="articles">Articles</h2>
+
+<p><a href="https://medium.com/systems-architectures/distributed-caching-woes-cache-invalidation-c3d389198af3">Distributed Caching Woes: Cache
+Invalidation</a>
+- 3 approaches to distributed cache invalidation. 1) TTL, 2) fanout to
+caching servers 3) using a MQ and finally 4) session affinity.</p>
+
+<p><a href="https://monkey.org/~marius/checklist.pdf">Distributed systems design checklist</a> - a nice set of questions to consider when designing a (distributed) system.</p>
+
+<p><a href="https://chris.beams.io/posts/git-commit/">How to Write a Git Commit Message</a>. Please do this.</p>
+
+<p><a href="https://wiki.linuxfoundation.org/networking/netem">networking:netem</a> -
+using <code>tc</code> to manipulate traffic (packet loss, corruption, latency) on
+Linux. Super useful for testing. A nice intro on <code>tc</code> by Julia Evans
+can be found <a href="http://jvns.ca/blog/2017/04/01/slow-down-your-internet-with-tc/">here</a>.</p>
+
+<p><a href="http://blog.presidentbeef.com/blog/2013/09/02/fast-compact-sparse-bitsets/">Fast Compact Sparse Bit Sets</a> - on implementing a <a href="https://github.com/presidentbeef/dumb-numb-set">sparse bit set</a> by Justin Collins.</p>
+    </article>
+    </main><footer>
+  
+  <nav>
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/weekly-notes/9/">&laquo; Weekly notes #9</a>
+    
+
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/weekly-notes/11/">Weekly notes #11 &raquo;</a>
+    
+  </nav>
+  
+</footer>
+</body>
+
+</html>

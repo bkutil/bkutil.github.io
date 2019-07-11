@@ -1,0 +1,107 @@
+<html>
+<base href="https://balazs.kutilovi.cz/">
+<link rel="canonical" href="https://balazs.kutilovi.cz/weekly-notes/14/">
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+
+<title>Weekly notes #14</title>
+
+
+
+<style>
+body {
+  max-width: 620px;
+  padding: 2em;
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 1.5em auto;
+}
+
+blockquote {
+  padding-left: 1.5em;
+  border-left: 3px #ddd solid;
+}
+
+nav {
+  margin: 0 0 1.5em 0;
+}
+
+footer {
+  margin: 1.5em 0 0 0;
+}
+
+p>code, pre, .highlight {
+  font-size: 16px;
+  border: 1px solid #f0f0f0;
+  padding: 0 0.5em;
+  overflow-y: scroll;
+}
+</style>
+
+<body><header>
+  <nav>
+    <a href="https://balazs.kutilovi.cz/" title="Home">Home</a>
+    
+    <a href="/posts/" title=""></a>
+    
+    <a href="/about/" title="">About</a>
+    
+    <a href="/weekly-notes/" title="">Weekly notes</a>
+    
+  <nav>
+</header>
+<main>
+    <article>
+      <h1> Weekly notes #14 </h1>
+
+      <p>Multithreading performance and variable shadowing in Ruby, basic block
+versioning.
+</p>
+
+<h2 id="ruby">Ruby</h2>
+
+<p><a href="https://medium.com/@dathanbennett/why-is-ruby-multithreading-slow-96afb475f669">Why Is Ruby Multithreading
+Slow</a>
+- fast producer/slow consumer problem bites on MRI.</p>
+
+<p><a href="https://thomasleecopeland.com/2017/04/20/shadowing-bug-in-the-wild.html">Shadowing bug in the wild</a>
+- when local variables shadow instance methods.</p>
+
+<p><a href="http://hawkins.io/2015/03/on-ruby/">On Ruby</a> - an &lsquo;I am leaving Ruby&rsquo;
+post. Reasons: low code quality of libraries, monkey-patching. Requires
+high test coverage and discipline to achieve confidence in correctness due to
+dynamism.</p>
+
+<p><a href="https://github.com/tmm1/rblineprof">tmm1/rblineprof</a> - Does what it
+says on the label - line profiler for Ruby.</p>
+
+<p><a href="http://iempire.ru/2017/04/17/ruby-signal-trap/">Signal handling in Ruby and its
+internals</a> - <code>Mutex#lock</code> cannot be called from inside the signal handler =&gt; no Logger, <code>mono_logger</code> gem is a lockless logger implementation that overcomes this limitation.</p>
+
+<h2 id="articles">Articles</h2>
+
+<p><a href="https://rix0r.nl/essays/2015/08/25/model-checking-for-the-working-man-mf/">Model checking for the working man</a> - an awesome, practical tutorial for TLA+/PlusCal, explained on a simple model (register increment backed by a DB + a read cache)</p>
+
+<p><a href="https://pointersgonewild.com/2015/09/24/basic-block-versioning-my-best-result-yet/">Basic block versioning, VM optimisation</a> - still reading the paper, but this method of JIT code generation is very efficient in eliminating dynamic type checks.</p>
+    </article>
+    </main><footer>
+  
+  <nav>
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/weekly-notes/13/">&laquo; Weekly notes #13</a>
+    
+
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/weekly-notes/15/">Weekly notes #15 &raquo;</a>
+    
+  </nav>
+  
+</footer>
+</body>
+
+</html>

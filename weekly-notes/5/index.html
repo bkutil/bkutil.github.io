@@ -1,0 +1,106 @@
+<html>
+<base href="https://balazs.kutilovi.cz/">
+<link rel="canonical" href="https://balazs.kutilovi.cz/weekly-notes/5/">
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+
+<title>Weekly notes #5</title>
+
+
+
+<style>
+body {
+  max-width: 620px;
+  padding: 2em;
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 1.5em auto;
+}
+
+blockquote {
+  padding-left: 1.5em;
+  border-left: 3px #ddd solid;
+}
+
+nav {
+  margin: 0 0 1.5em 0;
+}
+
+footer {
+  margin: 1.5em 0 0 0;
+}
+
+p>code, pre, .highlight {
+  font-size: 16px;
+  border: 1px solid #f0f0f0;
+  padding: 0 0.5em;
+  overflow-y: scroll;
+}
+</style>
+
+<body><header>
+  <nav>
+    <a href="https://balazs.kutilovi.cz/" title="Home">Home</a>
+    
+    <a href="/posts/" title=""></a>
+    
+    <a href="/about/" title="">About</a>
+    
+    <a href="/weekly-notes/" title="">Weekly notes</a>
+    
+  <nav>
+</header>
+<main>
+    <article>
+      <h1> Weekly notes #5 </h1>
+
+      <p>Idempotency for POSTs, on dangers of Ruby&rsquo;s Timeout and how Java solved
+the same problem.
+</p>
+
+<p>Ruby, systems, performance, and programming links from last week.</p>
+
+<p><a href="https://stripe.com/blog/idempotency">Designing robust and predictable APIs with idempotency</a> - Brandur Leach from Stripe discusses the benefits of retriable, idempotent requests, idempotency keys for POSTs, and <a href="https://github.com/stripe/stripe-ruby/blob/1bb9ac48b916b1c60591795cdb7ba6d18495e82d/lib/stripe/stripe_client.rb#L78-L92">jitter</a> as a way that avoids thundering herd effect.</p>
+
+<p><a href="https://philipwalton.com/articles/the-google-analytics-setup-i-use-on-every-site-i-build/#reporting-and-visualizing-your-data">The Google Analytics Setup I Use on Every Site I Build</a> - getting the most out of Google Analytics. Perf hacks, error tracking, granular interactions and precise (not sampled) timing measurements. A must have.</p>
+
+<p><a href="https://blog.cloudflare.com/incident-report-on-memory-leak-caused-by-cloudflare-parser-bug/">Incident report on memory leak caused by Cloudflare parser bug</a> and
+<a href="https://about.gitlab.com/2017/02/10/postmortem-of-database-outage-of-january-31/">Postmortem of database outage of January 31</a> - two post mortems from Cloudflare and GitLab, respectively. Both really good - GitLab&rsquo;s transparency is remarkable. I assume they sent another, private email with recommended actions to affected users - as this info is not in the post.</p>
+
+<p><a href="https://www.schneems.com/2017/02/21/the-oldest-bug-in-ruby-why-racktimeout-might-hose-your-server/">The Oldest Bug In Ruby - Why Rack::Timeout Might Hose your Server</a></p>
+
+<p><a href="https://jvns.ca/blog/2015/11/27/why-rubys-timeout-is-dangerous-and-thread-dot-raise-is-terrifying/">Why Ruby’s Timeout is dangerous (and Thread.raise is terrifying)</a></p>
+
+<p><a href="https://docs.oracle.com/javase/tutorial/essential/concurrency/interrupt.html">Interrupts (The Java™ Tutorials &gt; Essential Classes &gt; Concurrency)</a>.</p>
+
+<p>Timeouts in MRI Ruby are implemented by spawning a new and raising an exception in the original thread after some time elapses. However, this exception can be raised in the middle of an ensure block, effectively causing resource leaks. Richard Schneeman describes the issue and proposes a solution at the end of the post (basically an exception would be delayed only after ensure). Julia&rsquo;s post adds more details and points to Java&rsquo;s own solution to this problem - only certain operations can be aborted using Timeout exceptions, e.g. <code>sleep</code>, for others, the code itself has to check a flag set on the thread. Sounds easy in principle, so I&rsquo;m sure that for MRI, it would be a <a href="https://en.wikipedia.org/wiki/Small_matter_of_programming">SMOP</a>.</p>
+
+<p><a href="http://accidentallyquadratic.tumblr.com/post/157496054437/ruby-reject">Accidentally Quadratic — Ruby <code>reject!</code></a> - Ruby&rsquo;s <code>reject!</code> was quadratic in complexity between 1.9.3 and 2.3, as it shifted all subsequent of the array whenever an element was removed.</p>
+
+<p><a href="https://www.destroyallsoftware.com/blog/2014/tdd-straw-men-and-rhetoric">TDD, Straw Men, and Rhetoric</a> and <a href="https://www.destroyallsoftware.com/blog/2014/test-isolation-is-about-avoiding-mocks">Test Isolation Is About Avoiding Mocks</a> - Gary Bernhardt&rsquo;s articles on benefits of sub-second test suite and preventing nested Mocking.</p>
+
+<p><a href="https://thepugautomatic.com/2017/02/double-splat-to-merge-hashes/">Double splat to merge hashes - The Pug Automatic</a> - Neat tick!</p>
+
+<p><a href="https://github.com/frankmcsherry/blog/blob/master/posts/2015-08-15.md">Sorting out graph processing</a> - when doing large graph processing, is it faster to pre-sort edges or to do random-accesses? Turns out (radix) pre-sorting is really not that slow.</p>
+    </article>
+    </main><footer>
+  
+  <nav>
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/weekly-notes/4/">&laquo; Weekly notes #4</a>
+    
+
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/weekly-notes/6/">Weekly notes #6 &raquo;</a>
+    
+  </nav>
+  
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,124 @@
+<html>
+<base href="https://balazs.kutilovi.cz/">
+<link rel="canonical" href="https://balazs.kutilovi.cz/weekly-notes/3/">
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+
+<title>Weekly notes #3</title>
+
+
+
+<style>
+body {
+  max-width: 620px;
+  padding: 2em;
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 1.5em auto;
+}
+
+blockquote {
+  padding-left: 1.5em;
+  border-left: 3px #ddd solid;
+}
+
+nav {
+  margin: 0 0 1.5em 0;
+}
+
+footer {
+  margin: 1.5em 0 0 0;
+}
+
+p>code, pre, .highlight {
+  font-size: 16px;
+  border: 1px solid #f0f0f0;
+  padding: 0 0.5em;
+  overflow-y: scroll;
+}
+</style>
+
+<body><header>
+  <nav>
+    <a href="https://balazs.kutilovi.cz/" title="Home">Home</a>
+    
+    <a href="/posts/" title=""></a>
+    
+    <a href="/about/" title="">About</a>
+    
+    <a href="/weekly-notes/" title="">Weekly notes</a>
+    
+  <nav>
+</header>
+<main>
+    <article>
+      <h1> Weekly notes #3 </h1>
+
+      <p></p>
+
+<p>Ruby, systems, performance, and programming links from last week.</p>
+
+<p><a href="http://tenderlovemaking.com/2017/02/01/object-id-in-mri.html">Object ID in MRI</a> -
+Aaron explains how objects are allocated in Ruby (they&rsquo;re aligned on 40
+byte boundaries), tagged pointers (the scheme is
+<a href="https://github.com/ruby/ruby/blob/8395d5a7c33b1a539d42ecabadd094f0871397a7/gc.c#L3087-L3114">here</a>),
+and how to find out the address and an arena in which the object is
+located, given its <code>object_id</code>.</p>
+
+<p><a href="https://github.com/rubinius/rubinius-archive/blob/cf54187d421275eec7d2db0abd5d4c059755b577/_posts/2016-01-11-nil-is-not-null-and-other-tales.markdown">Nil is not NULL and other tales</a> - the article above and a discussion with <a href="https://twitter.com/mvidner">Martin Vidner</a> brought me to this article. This part is especially interesting. Perhaps we could develop something similar in MRI?:</p>
+
+<blockquote>
+<p>If the least significant five bits of a pointer match that value, the value is considered by Rubinus to be nil.
+In the past, we have only ever used that precise value. In other words,
+all the other bits are zero. But nothing requires this, and those other
+bits don&rsquo;t need to be wasted. When a method returns nil and that nil
+is not a value that was propagated from a value passed to the method,
+we can return a nil that is tagged for that specific method. The value
+behaves exactly as nil, when nil was a singleton value. But now we can
+find the source of the nil when we encounter it later. We can trace
+various paths of specific nils through code and help the developer
+understand why a particular value is nil.</p>
+</blockquote>
+
+<p><a href="http://bendyworks.com/blog/tragedy-maybe-monad-ruby">The Tragedy of Maybe and Ruby</a> - A different perspective on the problem of <code>nil</code>s. <code>Maybe</code> type and how it would probably not work in Ruby as it cannot be effectively used without a robust type checker.</p>
+
+<p><a href="https://jvns.ca/blog/2014/09/06/how-to-read-an-executable/">How is a binary executable organized? Let&apos;s explore it!</a> - <a href="https://www.kernel.org/doc/Documentation/trace/uprobetracer.txt">uprobes</a> require <a href="https://github.com/brendangregg/perf-tools/blob/master/user/uprobe#L311">function addresses</a> to be registered.</p>
+
+<p>How debuggers work - Parts <a href="http://eli.thegreenplace.net/2011/01/23/how-debuggers-work-part-1/">1</a>, <a href="http://eli.thegreenplace.net/2011/01/27/how-debuggers-work-part-2-breakpoints">2</a>, <a href="http://eli.thegreenplace.net/2011/02/07/how-debuggers-work-part-3-debugging-information">3</a>. Mostly using <code>ptrace</code>. And ACME duct tape. The last part covers debugging info and the DWARF format - the article about <code>objdump</code> above lead me here.</p>
+
+<p><a href="https://en.wikipedia.org/wiki/Leaky_bucket">Leaky bucket - Wikipedia</a> -
+a rate limiting algorithm. Shopify described its use in <a href="http://shopifyengineering.myshopify.com/blogs/engineering/solving-for-weekly-flash-sales-through-scriptable-load-balancers">Surviving Flashes of High-Write Traffic Using Scriptable Load Balancer</a>.</p>
+
+<p><a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2011/10/ConsistencyAndBaseballReport.pdf">Replicated Data Consistency Explained Through Baseball</a> - a paper from Microsoft.</p>
+
+<h2 id="videos">Videos</h2>
+
+<p><a href="https://www.youtube.com/watch?v=czes-oa0yik">Metrics, Metrics, Everywhere</a> - an older talk from Coda Hale. How metrics lead to better business and programming decisions. I suppose the tool he described eventually evolved into systems like Prometheus? Or was it the other way around? :)</p>
+
+<h2 id="tools">Tools</h2>
+
+<p><a href="https://github.com/FredKSchott/CoVim">FredKSchott/CoVim: Collaborative Editing for Vim</a> - Collaborative Vim. Yay!</p>
+
+<p><a href="https://snapcraft.io/">Snaps</a> - universal Linux packages.</p>
+    </article>
+    </main><footer>
+  
+  <nav>
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/weekly-notes/2/">&laquo; Weekly notes #2</a>
+    
+
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/weekly-notes/4/">Weekly notes #4 &raquo;</a>
+    
+  </nav>
+  
+</footer>
+</body>
+
+</html>

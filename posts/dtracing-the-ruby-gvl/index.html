@@ -1,0 +1,166 @@
+<html>
+<base href="https://balazs.kutilovi.cz/">
+<link rel="canonical" href="https://balazs.kutilovi.cz/posts/dtracing-the-ruby-gvl/">
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+
+<title>dtracing the Ruby GVL</title>
+
+
+
+<style>
+body {
+  max-width: 620px;
+  padding: 2em;
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 1.5em auto;
+}
+
+blockquote {
+  padding-left: 1.5em;
+  border-left: 3px #ddd solid;
+}
+
+nav {
+  margin: 0 0 1.5em 0;
+}
+
+footer {
+  margin: 1.5em 0 0 0;
+}
+
+p>code, pre, .highlight {
+  font-size: 16px;
+  border: 1px solid #f0f0f0;
+  padding: 0 0.5em;
+  overflow-y: scroll;
+}
+</style>
+
+<body><header>
+  <nav>
+    <a href="https://balazs.kutilovi.cz/" title="Home">Home</a>
+    
+    <a href="/posts/" title=""></a>
+    
+    <a href="/about/" title="">About</a>
+    
+    <a href="/weekly-notes/" title="">Weekly notes</a>
+    
+  <nav>
+</header>
+<main>
+    <article>
+      <h1> dtracing the Ruby GVL </h1>
+
+      <p></p>
+
+<p>Nate Berkopec posted an interesting question on
+<a href="https://twitter.com/nateberkopec/status/1124056388504838144">twitter</a>:</p>
+
+<blockquote>
+<p>Puma office hours: we want to measure what % of the time the global VM
+lock is held in a Ruby process. anyone got an idea on how to even
+start to observe that, performantly? #railsconf</p>
+</blockquote>
+
+<p>I thought about using &lsquo;dtrace&rsquo; immediately, since I already experimented with adding
+custom probes to MRI Ruby a few years <a href="/posts/ruby-tracing-part-two-rbtrace/">back</a>.</p>
+
+<p>With that I set out to patch MRI to allow for this. And it worked -
+Ruby with the <a href="/gvl-tracing.patch">patch</a> can be installed using</p>
+
+<pre><code>ruby-install ruby-2.6.3 --patch https://balazs.kutilovi.cz/gvl-tracing.patch
+</code></pre>
+
+<p>The patch consists of:</p>
+
+<ol>
+<li>Adding the probe definitions and the hooks.</li>
+<li>Changing the VM struct to include a &lsquo;waiting&rsquo; counter. While Ruby 2.5 used a counter to track threads waiting for the GVL,
+the later versions switched to a linked list. So I re-introduced the counter to avoid walking the list every time.</li>
+</ol>
+
+<p>With these changes applied, I could get to tracing.</p>
+
+<p>The traced program was Puma (<code>Version 3.12.1 (ruby 2.6.3-p62)</code>, running a <code>config.ru</code> that consisted of:</p>
+
+<pre><code>puts Process.pid
+run -&gt;(env) { [200, {&quot;Content-Type&quot; =&gt; &quot;text/html&quot;}, [&quot;Hello World!&quot;]] }
+</code></pre>
+
+<p>Puma in the default settings (for <code>puma config.ru</code>), ran in the development environment and with 0
+min and 16 max threads. The workload was generated using <a href="https://github.com/wg/wrk">wrk</a>:</p>
+
+<pre><code>wrk -c 20 -d 10 -t 10 --latency http://localhost:9292
+</code></pre>
+
+<p>And here are some results:</p>
+
+<p>Quantized/binned times (in microseconds) that the GVL was held:</p>
+
+<pre><code>➜  ~ sudo dtrace -p 95059 -s gvl.d
+dtrace: script 'gvl.d' matched 8 probes
+
+ value  ------------- Distribution ------------- count
+     1 |                                         0
+     2 |                                         1
+     4 |@@                                       14102
+     8 |@@@@@@@@@@@@@@@                          123107
+    16 |@@@@@@@@@@@@@@@@@@                       146116
+    32 |@@@@@                                    40426
+    64 |                                         1996
+   128 |                                         258
+   256 |                                         47
+   512 |                                         118
+  1024 |                                         96
+  2048 |                                         11
+  4096 |                                         0
+</code></pre>
+
+<p>And a number of threads waiting to get the GVL:</p>
+
+<pre><code>➜  ~ sudo dtrace -p 95059 -n 'ruby::vm-gvl-acquire { @waits = quantize(arg0) }'
+
+dtrace: description 'ruby::vm-gvl-acquire ' matched 1 probe
+
+ value  ------------- Distribution ------------- count
+    -1 |                                         0
+     0 |                                         497
+     1 |                                         87
+     2 |                                         341
+     4 |                                         1553
+     8 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 346829
+    16 |                                         0
+</code></pre>
+
+<p>So most of the time, 8-15 threads were waiting for the GVL - wrk was
+saturating all threads and they had to wait for the lock. (quantize
+increments the value in the highest bucket &lt; arg0)</p>
+
+<p>It should be also possible to trace how long a particular thread spent
+in the GVL:</p>
+
+<pre><code>sudo dtrace -p 11864 -n 'ruby::vm-gvl-acquire { start[tid] = timestamp } ruby::vm-gvl-release { @total[tid] = sum((timestamp - start[tid])) }'
+</code></pre>
+    </article>
+    </main><footer>
+  
+  <nav>
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/posts/notes-from-rubyconf-au-talks/">&laquo; Notes from RubyConf 2017 AU talks</a>
+    
+
+    
+  </nav>
+  
+</footer>
+</body>
+
+</html>

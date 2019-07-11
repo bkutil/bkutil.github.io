@@ -1,0 +1,108 @@
+diff --git a/probes.d b/probes.d
+index 57a3d762bd..3397e1a175 100644
+--- a/probes.d
++++ b/probes.d
+@@ -187,6 +187,24 @@ provider ruby {
+   probe insn__operand(const char *val, const char *insns_name);
+ #endif
+ 
++  /*
++   * ruby:::vm-gvl-acquire();
++   *
++   * Fired when a thread acquires the GVL.
++   *
++   * `waiting` the number of threads in the wait queue
++   */
++  probe vm__gvl__acquire(unsigned long waiting);
++
++  /*
++   * ruby:::vm-gvl-release();
++   *
++   * Fired when a thread releases the GVL.
++   *
++   * `waiting` the number of threads in the wait queue
++   */
++  probe vm__gvl__release(unsigned long waiting);
++
+   /*
+      ruby:::gc-mark-begin();
+ 
+diff --git a/thread_pthread.c b/thread_pthread.c
+index 499da0b9ca..9095d2afb2 100644
+--- a/thread_pthread.c
++++ b/thread_pthread.c
+@@ -13,6 +13,7 @@
+ 
+ #include "gc.h"
+ #include "mjit.h"
++#include "probes.h"
+ 
+ #ifdef HAVE_SYS_RESOURCE_H
+ #include <sys/resource.h>
+@@ -237,6 +238,9 @@ do_gvl_timer(rb_vm_t *vm, rb_thread_t *th)
+     vm->gvl.timer = 0;
+ }
+ 
++#define RUBY_DTRACE_VM_HOOK(name, arg0) \
++    do {if (RUBY_DTRACE_VM_##name##_ENABLED()) RUBY_DTRACE_VM_##name(arg0);} while (0)
++
+ static void
+ gvl_acquire_common(rb_vm_t *vm, rb_thread_t *th)
+ {
+@@ -248,6 +252,8 @@ gvl_acquire_common(rb_vm_t *vm, rb_thread_t *th)
+ 
+         list_add_tail(&vm->gvl.waitq, &nd->node.gvl);
+ 
++        vm->gvl.waiting++;
++
+         do {
+             if (!vm->gvl.timer) {
+                 do_gvl_timer(vm, th);
+@@ -259,6 +265,8 @@ gvl_acquire_common(rb_vm_t *vm, rb_thread_t *th)
+ 
+         list_del_init(&nd->node.gvl);
+ 
++        vm->gvl.waiting--;
++
+         if (vm->gvl.need_yield) {
+             vm->gvl.need_yield = 0;
+             rb_native_cond_signal(&vm->gvl.switch_cond);
+@@ -267,7 +275,10 @@ gvl_acquire_common(rb_vm_t *vm, rb_thread_t *th)
+     else { /* reset timer if uncontended */
+         vm->gvl.timer_err = ETIMEDOUT;
+     }
++
++    RUBY_DTRACE_VM_HOOK(GVL_ACQUIRE, vm->gvl.waiting);
+     vm->gvl.owner = th;
++
+     if (!vm->gvl.timer) {
+         if (!designate_timer_thread(vm) && !ubf_threads_empty()) {
+             rb_thread_wakeup_timer_thread(-1);
+@@ -287,6 +298,7 @@ static const native_thread_data_t *
+ gvl_release_common(rb_vm_t *vm)
+ {
+     native_thread_data_t *next;
++    RUBY_DTRACE_VM_HOOK(GVL_RELEASE, vm->gvl.waiting);
+     vm->gvl.owner = 0;
+     next = list_top(&vm->gvl.waitq, native_thread_data_t, node.ubf);
+     if (next) rb_native_cond_signal(&next->cond.gvlq);
+@@ -346,6 +358,7 @@ gvl_init(rb_vm_t *vm)
+     rb_native_cond_initialize(&vm->gvl.switch_cond);
+     rb_native_cond_initialize(&vm->gvl.switch_wait_cond);
+     list_head_init(&vm->gvl.waitq);
++    vm->gvl.waiting = 0;
+     vm->gvl.owner = 0;
+     vm->gvl.timer = 0;
+     vm->gvl.timer_err = ETIMEDOUT;
+diff --git a/thread_pthread.h b/thread_pthread.h
+index f2b7e598f7..c1d22dd0a8 100644
+--- a/thread_pthread.h
++++ b/thread_pthread.h
+@@ -62,6 +62,7 @@ typedef struct rb_global_vm_lock_struct {
+      *   timer.
+      */
+     struct list_head waitq; /* <=> native_thread_data_t.node.ubf */
++    volatile unsigned long waiting;
+     const struct rb_thread_struct *timer;
+     int timer_err;
+ 

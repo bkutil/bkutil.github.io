@@ -1,0 +1,150 @@
+<html>
+<base href="https://balazs.kutilovi.cz/">
+<link rel="canonical" href="https://balazs.kutilovi.cz/posts/notes-from-rubyconf-au-talks/">
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+
+<title>Notes from RubyConf 2017 AU talks</title>
+
+
+
+<style>
+body {
+  max-width: 620px;
+  padding: 2em;
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 1.5em auto;
+}
+
+blockquote {
+  padding-left: 1.5em;
+  border-left: 3px #ddd solid;
+}
+
+nav {
+  margin: 0 0 1.5em 0;
+}
+
+footer {
+  margin: 1.5em 0 0 0;
+}
+
+p>code, pre, .highlight {
+  font-size: 16px;
+  border: 1px solid #f0f0f0;
+  padding: 0 0.5em;
+  overflow-y: scroll;
+}
+</style>
+
+<body><header>
+  <nav>
+    <a href="https://balazs.kutilovi.cz/" title="Home">Home</a>
+    
+    <a href="/posts/" title=""></a>
+    
+    <a href="/about/" title="">About</a>
+    
+    <a href="/weekly-notes/" title="">Weekly notes</a>
+    
+  <nav>
+</header>
+<main>
+    <article>
+      <h1> Notes from RubyConf 2017 AU talks </h1>
+
+      <p></p>
+
+<h3 id="reinvesting-in-ruby-by-tim-riley">Reinvesting in Ruby by Tim Riley</h3>
+
+<p><a href="https://m.youtube.com/watch?v=V8Sdg25eKlM">Video</a></p>
+
+<ul>
+<li>Rails was defining the Ruby ecosystem, time to explore other alternatives</li>
+<li>Introduces dry-rb gems on a blog post example</li>
+<li>Minimalistic, single-responsibility, composable gems for common tasks</li>
+<li><a href="https://github.com/dry-rb/dry-validation">dry-validation</a>, <a href="https://github.com/dry-rb/dry-monads">dry-monads</a>, <a href="https://github.com/dry-rb/dry-matcher">dry-matcher</a> - pattern matching</li>
+</ul>
+
+<h3 id="actors-in-ruby-why-let-elixir-have-all-the-fun-by-marcos-matos">Actors in Ruby! Why let Elixir have all the fun by Marcos Matos</h3>
+
+<p><a href="https://m.youtube.com/watch?v=wveC2bbFYgA">Video</a></p>
+
+<ul>
+<li>Threads vs. forks (forks heavy - even with CoW optimisations).</li>
+<li>Forking does not have built-in way to communicate - some form of IPC is required, e.g. message queues.</li>
+<li>GIL is not a problem for IO workloads - it is not held during IO (network calls or file reads).</li>
+<li>Core issue is sharing mutable state and managing threads</li>
+<li>Introduction to Celluloid
+
+<ul>
+<li>async programming, actors -&gt; OO + message passing</li>
+<li>message passing, actors mutate their own, isolated state, process messages from mailbox</li>
+<li>actors - thread based workers</li>
+<li>managed worker pool</li>
+<li>supervision of workers, composable to hierarchies</li>
+<li>linking -&gt; &lsquo;running/dead&rsquo; dependency</li>
+</ul></li>
+<li>Dcell (distributed actors, ZeroMQ)</li>
+</ul>
+
+<h3 id="defragging-ruby-by-aaron-patterson">Defragging Ruby by Aaron Patterson</h3>
+
+<p><a href="https://m.youtube.com/watch?v=nAEt36XNtAE">Video</a></p>
+
+<ul>
+<li>Ruby heap layout (pages, slots)</li>
+<li>Memory alignment - objects on 40 byte boundary, pages 16k (407, 408 objects on a page)</li>
+<li>Certain objects do not get allocated on the heap (pointer tagging - alignment frees lower bits for tagging)</li>
+<li>Idea: defragment heap, to free pages after they get fragmented after GC - improve locality, performance. Run GC.compact after app startup, before forking new Unicorn workers.</li>
+<li><code>ObjectSpace.dump_all</code> + determining  page address =&gt; heap fragmentation <a href="https://github.com/tenderlove/heapfrag">map</a></li>
+<li>An algorithm to compact heap (two finger compaction, or <a href="https://en.m.wikipedia.org/wiki/Cheney%27s_algorithm">Cheneys GC algoithm</a> )</li>
+<li>Obstacles (memory address dependent code - e.g. <code>object_id</code>, C extensions).</li>
+<li>Certain pages still cannot get freed, only compacted.</li>
+<li>Solution - keep a hash table of un-relocatable objects. Sounds hacky, maybe no other way to keep backwards-compat?</li>
+<li>Code in a <a href="https://github.com/ruby/ruby/compare/trunk...github:gc-compact">public repo</a></li>
+</ul>
+
+<h3 id="performance-optimization-in-ruby-by-prathmesh-ranaut">Performance Optimization in Ruby by Prathmesh Ranaut</h3>
+
+<p><a href="https://m.youtube.com/watch?v=HHRTSpFGCGg">Video</a></p>
+
+<ul>
+<li>Have a benchmarking suite - <a href="https://github.com/evanphx/benchmark-ips">benchmark-ips</a>, <a href="https://github.com/change/method_profiler">method_profiler</a></li>
+<li>Profile methods, find out the bottleneck - memory, CPU, IO bound workload?</li>
+<li>Upgrade MRI Ruby - constant perf improvements in newer versions</li>
+<li>Try multithreading</li>
+<li>Try alternative implementations JRuby, Rubinius - might be better for certain workloads, benchmarks required</li>
+</ul>
+
+<h3 id="ruby-http2-by-hiro-asari">Ruby, HTTP2 by Hiro Asari</h3>
+
+<p><a href="https://m.youtube.com/watch?v=_KFxWyJrzso">Video</a></p>
+
+<ul>
+<li>Intro to how H2 works</li>
+<li>There&rsquo;s no proper support in Ruby/Rack yet, apart from a few H2 clients. Rack is solely request/response oriented.</li>
+</ul>
+    </article>
+    </main><footer>
+  
+  <nav>
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/posts/technical-library-pisek-first-weeks/">&laquo; Little technical library Pisek - first weeks</a>
+    
+
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/posts/dtracing-the-ruby-gvl/">dtracing the Ruby GVL &raquo;</a>
+    
+  </nav>
+  
+</footer>
+</body>
+
+</html>

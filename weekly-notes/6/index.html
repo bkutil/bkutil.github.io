@@ -1,0 +1,118 @@
+<html>
+<base href="https://balazs.kutilovi.cz/">
+<link rel="canonical" href="https://balazs.kutilovi.cz/weekly-notes/6/">
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+
+<title>Weekly notes #6</title>
+
+
+
+<style>
+body {
+  max-width: 620px;
+  padding: 2em;
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 1.5em auto;
+}
+
+blockquote {
+  padding-left: 1.5em;
+  border-left: 3px #ddd solid;
+}
+
+nav {
+  margin: 0 0 1.5em 0;
+}
+
+footer {
+  margin: 1.5em 0 0 0;
+}
+
+p>code, pre, .highlight {
+  font-size: 16px;
+  border: 1px solid #f0f0f0;
+  padding: 0 0.5em;
+  overflow-y: scroll;
+}
+</style>
+
+<body><header>
+  <nav>
+    <a href="https://balazs.kutilovi.cz/" title="Home">Home</a>
+    
+    <a href="/posts/" title=""></a>
+    
+    <a href="/about/" title="">About</a>
+    
+    <a href="/weekly-notes/" title="">Weekly notes</a>
+    
+  <nav>
+</header>
+<main>
+    <article>
+      <h1> Weekly notes #6 </h1>
+
+      <p>On 10x programmer myth, tail call optimisation in Ruby and speeding up tests using coverage analysis.
+</p>
+
+<p>Ruby, systems, performance, and programming links from last week.</p>
+
+<h2 id="ruby">Ruby</h2>
+
+<p>Few articles related to tail call optimization in Ruby (available
+since 1.9.2 as a compile time option):</p>
+
+<p><a href="http://blog.tdg5.com/tail-call-optimization-in-ruby-deep-dive/">Tail Call Optimization in Ruby Deep Dive</a></p>
+
+<p><a href="http://timelessrepo.com/tailin-ruby">Tailin Ruby</a> - how to emulate TCO
+without native support.</p>
+
+<p><a href="http://milhouseonsoftware.com/2015/08/24/caveats-with-ruby-interrupt/">Caveats with Ruby Interrupt</a> - continuing with timeouts theme from <a href="/weekly-notes/5">previous week</a>, here&rsquo;s another article dealing with interrupts.</p>
+
+<p><a href="https://www.youtube.com/watch?v=JMGmaRZtgM8">OMG Ruby and Rails Performance</a> - Aaron Patterson talks about speeding up tests (by not running those that exercise unmodified code - see <a href="https://ruby-doc.org/stdlib-2.4.0/libdoc/coverage/rdoc/Coverage.html#method-c-peek_result">Coverage.peek_result</a>, pros and cons of weak refs and benchmarking using <code>stack-prof</code> and <code>allocation_tracer</code>).</p>
+
+<h2 id="on-the-10x-programmer">On the 10x programmer</h2>
+
+<p><a href="http://antirez.com/news/112">The mythical 10x programmer</a> - good design advice - cutting off unnecessary cruft to speed up development of other features, minimalism, sacrificing perfection - the mentioned skills are good to hone continuously.</p>
+
+<p><a href="http://redmonk.com/fryan/2016/12/12/on-the-myth-of-the-10x-engineer-and-the-reality-of-the-distinguished-engineer/">On the Myth of the 10X Engineer</a> - similar, focused on interpersonal and management skills.</p>
+
+<p><a href="http://hintjens.com/blog:117">Building online communities</a>. So maybe its just simpler to hire competent &lsquo;&lt;10x&rsquo; devs and tech leads and let the multiplicative effect do its work? The minimalism tone is noticeable here as well.</p>
+
+<h2 id="articles">Articles</h2>
+
+<p><a href="http://www.virtuouscode.com/2014/02/10/the-passion-gospel/">The Passion Gospel</a> - on overuse and misuse of &lsquo;passionate&rsquo;.</p>
+
+<p><a href="https://www.tbray.org/ongoing/When/201x/2017/02/18/Geek-Career-Paths">Geek Career Paths</a> - Government? Megacorp? Startup? Nonprofit? Tim Bray discusses the options and compares them based on his own experience.</p>
+
+<h2 id="tools">Tools</h2>
+
+<p><a href="https://facebookincubator.github.io/prophet/">Prophet</a> - Facebook
+releases it&rsquo;s Python/R tool for time-series analysis and forecasting.</p>
+
+<p><a href="http://httpstat.us/">httpstat.us</a> - responds with the status you need.
+Useful for testing.</p>
+    </article>
+    </main><footer>
+  
+  <nav>
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/weekly-notes/5/">&laquo; Weekly notes #5</a>
+    
+
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/weekly-notes/7/">Weekly notes #7 &raquo;</a>
+    
+  </nav>
+  
+</footer>
+</body>
+
+</html>

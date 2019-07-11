@@ -1,0 +1,350 @@
+<html>
+<base href="https://balazs.kutilovi.cz/">
+<link rel="canonical" href="https://balazs.kutilovi.cz/posts/ruby-tracing-part-two-rbtrace/">
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+
+<title>Ruby tracing part two - rbtrace</title>
+
+
+
+<style>
+body {
+  max-width: 620px;
+  padding: 2em;
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 1.5em auto;
+}
+
+blockquote {
+  padding-left: 1.5em;
+  border-left: 3px #ddd solid;
+}
+
+nav {
+  margin: 0 0 1.5em 0;
+}
+
+footer {
+  margin: 1.5em 0 0 0;
+}
+
+p>code, pre, .highlight {
+  font-size: 16px;
+  border: 1px solid #f0f0f0;
+  padding: 0 0.5em;
+  overflow-y: scroll;
+}
+</style>
+
+<body><header>
+  <nav>
+    <a href="https://balazs.kutilovi.cz/" title="Home">Home</a>
+    
+    <a href="/posts/" title=""></a>
+    
+    <a href="/about/" title="">About</a>
+    
+    <a href="/weekly-notes/" title="">Weekly notes</a>
+    
+  <nav>
+</header>
+<main>
+    <article>
+      <h1> Ruby tracing part two - rbtrace </h1>
+
+      <p></p>
+
+<p>In a <a href="https://balazs.kutilovi.cz/post/ruby-tracing-part-one-bpf/">previous post</a>, I looked
+at how Linux&rsquo;s eBPF framework can be used with Ruby.</p>
+
+<p>Of course <a href="https://en.wikipedia.org/wiki/There%27s_more_than_one_way_to_do_it">TIMTOWTDI</a>!</p>
+
+<p>So, it turns out there&rsquo;s an excellent gem for Ruby tracing:
+<a href="https://github.com/tmm1/rbtrace">rbtrace</a> by <a href="https://twitter.com/tmm1">Aman
+Gupta</a>, which I encountered a few months ago,
+in <a href="http://samsaffron.com/archive/2015/03/31/debugging-memory-leaks-in-ruby">Sam Saffron&rsquo;s post</a>
+when I needed to get a heap dump from a Ruby process to track down a
+memory leak.</p>
+
+<h2 id="rbtrace">rbtrace</h2>
+
+<p><a href="http://www.justinweiss.com/articles/how-to-debug-ruby-performance-problems-in-production/">Justin Weiss</a>
+wrote up a summary with some cool examples of what the gem can do, but
+in a nutshell:</p>
+
+<p>It allows the tracer (rbtrace script) being notified, when a tracee
+(Ruby process) executes a method.</p>
+
+<p>Additionally, it allows the tracer to execute snippets of Ruby code in
+the tracee&rsquo;s context and to fork the <code>ruby</code> process.</p>
+
+<p>So, using these capabilities, it&rsquo;s possible to get heap dumps,
+thread backtraces, profile slow functions (SQL queries, HTTP calls), and
+attach GDB safely, all in production!</p>
+
+<p>But how does it work? And, if it is &lsquo;safe for production&rsquo;, what is its
+performance impact?</p>
+
+<p>To understand them better, I tried to explore <code>rbtrace</code>&rsquo;s and Ruby VM&rsquo;s trace internals.</p>
+
+<p>In this post, I&rsquo;ll cover the how&rsquo;s of both the C extension and Ruby
+parts, the communication between them, and look at a few interesting
+and sometimes undocumented Ruby APIs. Afterwards, I&rsquo;ll present some
+benchmarks against a test application with and without <code>rbtrace</code>
+enabled.</p>
+
+<h2 id="internals">Internals</h2>
+
+<p><code>rbtrace</code> has two parts - a C extension for MRI, which registers a hook in the
+VM, and a command line tool that communicates with the extension and
+interrogates it for useful information.</p>
+
+<h2 id="ruby-library">Ruby library</h2>
+
+<p>The &lsquo;non-C part&rsquo; of <code>rbtrace</code> is quite simple, it consists mostly of a:</p>
+
+<ul>
+<li><a href="https://github.com/tmm1/rbtrace/blob/v0.4.8/lib/rbtrace/cli.rb">Command-line client</a>, for doing the usual option-parsing dance</li>
+<li><a href="https://github.com/tmm1/rbtrace/blob/v0.4.8/lib/rbtrace/msgq.rb">MsgQ class</a> for inter-process communication using the queue. This class uses <a href="https://github.com/ffi/ffi">FFI</a> to access underlying system functions.</li>
+<li><a href="https://github.com/tmm1/rbtrace/blob/v0.4.8/lib/rbtrace/rbtracer.rb">The tracer</a> that handles the communication between the VM and <code>rbtrace</code>, interpreting and printing incoming data.</li>
+</ul>
+
+<p>The communication is handled in an interesting way:</p>
+
+<p>The tracer asks the OS to set up a <a href="https://users.cs.cf.ac.uk/Dave.Marshall/C/node25.html#SECTION002510000000000000000">IPC message queue</a>
+between the <code>rbtrace</code> and <code>ruby</code>, using <a href="https://github.com/tmm1/rbtrace/blob/v0.4.8/lib/rbtrace/rbtracer.rb#L56">PID</a> of the Ruby process as the shared
+key. This queue then allows the tracer pass short commands (up to   120 or 256
+characters, depending on the platform) to the tracee. It also sets up a
+<a href="https://github.com/tmm1/rbtrace/blob/v0.4.8/lib/rbtrace/rbtracer.rb#L46">socket</a>,
+into which the tracee writes its output.</p>
+
+<p>So the complete picture looks like:</p>
+
+<ol>
+<li><code>rbtrace</code> <a href="https://github.com/tmm1/rbtrace/blob/v0.4.8/lib/rbtrace/rbtracer.rb#L321">writes a command</a> into an IPC message queue</li>
+<li>It sends Ruby VM a <a href="https://github.com/tmm1/rbtrace/blob/v0.4.8/lib/rbtrace/rbtracer.rb#L288">SIGURG</a> signal. The C-extension previously added a <a href="https://github.com/tmm1/rbtrace/blob/v0.4.8/ext/rbtrace.c#L1115-L1123">listener</a> for this signal.</li>
+<li><code>rbtrace</code> starts waiting for output on the socket</li>
+<li>Upon receiving the signal, the extension <a href="https://github.com/tmm1/rbtrace/blob/v0.4.8/ext/rbtrace.c#L868">executes</a> the command (registers a
+hook for profiling or evaluates Ruby code provided by the user).</li>
+<li>As the Ruby VM is calling the hook, the extension writes out the
+ resulting info into a <a href="https://github.com/tmm1/rbtrace/blob/v0.4.8/ext/rbtrace.c#L255">socket</a>.</li>
+<li><code>rbtrace</code> reads and
+<a href="https://github.com/tmm1/rbtrace/blob/v0.4.8/lib/rbtrace/rbtracer.rb#L370">parses</a> this info, displays it on the console.</li>
+</ol>
+
+<p>I haven&rsquo;t seen <code>SIGURG</code> before - reading about it lead me to an
+article on Wikipedia about <a href="https://en.wikipedia.org/wiki/Out-of-band_data">out-of-band communication</a>. So it&rsquo;s use as
+notification between these processes suddenly made sense.</p>
+
+<h2 id="c-extension">C extension</h2>
+
+<p>It turns out, that the &lsquo;C part&rsquo; - the native extension part of <code>rbtrace</code>, is not that
+complicated either. Most of the code is related to passing the data in an out
+of the native extension, and bookkeeping around traced method names and
+expressions.</p>
+
+<p>There are three interesting bits:</p>
+
+<ul>
+<li>signal handler, or rather the <code>rb_postponed_job</code> API.</li>
+<li>Ruby&rsquo;s <code>event_hook</code> API</li>
+<li>hook that gets called on method/cmethod entry/return</li>
+</ul>
+
+<p>First two are APIs for interaction with Ruby - these allow the extension to run
+code inside the VM. The last one is the hook that extracts info from the
+runtime context.</p>
+
+<h3 id="the-rb-postponed-job-api">The rb_postponed_job API</h3>
+
+<p>During compilation, the extension tests for presence of
+<code>rb_postponed_job</code> and if not present, the implementation falls back to
+executing the incoming command immediately.</p>
+
+<p>The postponed job API allows for running the registered function (a
+&lsquo;job&rsquo;), whenever the thread handles interrupts.</p>
+
+<p>Defined in <a href="https://github.com/ruby/ruby/blob/ruby_2_4/include/ruby/debug.h#L85-L88">debug.h</a>, the API looks like:</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C" data-lang="C"><span style="color:#000;font-weight:bold">typedef</span> <span style="color:#900;font-weight:bold">void</span> (<span style="color:#000;font-weight:bold">*</span>rb_postponed_job_func_t)(<span style="color:#458;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>arg);
+<span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">rb_postponed_job_register</span>(<span style="color:#458;font-weight:bold">unsigned</span> <span style="color:#458;font-weight:bold">int</span> flags, rb_postponed_job_func_t func, <span style="color:#458;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>data);
+<span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">rb_postponed_job_register_one</span>(<span style="color:#458;font-weight:bold">unsigned</span> <span style="color:#458;font-weight:bold">int</span> flags, rb_postponed_job_func_t func, <span style="color:#458;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>data);</code></pre></div>
+<p>The implementation is in
+<a href="https://github.com/ruby/ruby/blob/ruby_2_4/vm_trace.c#L1563-L1633">vm_trace.c</a>. But how do the jobs get
+executed? And when?</p>
+
+<p>First part is the responsibility of
+<code>rb_postponed_job_flush(rb_vm_t)</code>, which sets interrupt mask on the
+current thread <code>POSTPONED_JOB_INTERRUPT_MASK|TRAP_INTERRUPT_MASK</code>, walks
+the registered jobs and executes them, then restores the mask to
+previous state.</p>
+
+<p>To find out when, we need to see how <code>rb_postponed_job_flush</code> is called.
+Grepping for its name and a bit of digging reveals <code>rb_thread_execute_interrupts</code>,
+which gets called on the VM <a href="https://github.com/ruby/ruby/blob/ruby_2_4/signal.c#L519">receiving a
+signal</a>, or
+during <a href="https://github.com/ruby/ruby/blob/ruby_2_4/io.c#L10158">IO</a>.</p>
+
+<p>Now, I don&rsquo;t know for certain, but it seems that the same signal that
+triggers reading of the incoming command by the C-extension, also
+triggers execution of the job?</p>
+
+<h3 id="rb-event-hook-api">rb_event_hook API</h3>
+
+<p>Apparently, it&rsquo;s possible to register hooks to <a href="https://github.com/ruby/ruby/blob/ruby_2_4/include/ruby/ruby.h#L2050-L2085">various events</a> in the
+Ruby VM. These hooks then get automatically executed when the event
+occurs. <code>rbtrace</code> uses it to trace function calls:</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C" data-lang="C"><span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">void</span> <span style="color:#900;font-weight:bold">event_hook_install</span>()
+{
+  <span style="color:#000;font-weight:bold">if</span> (<span style="color:#000;font-weight:bold">!</span>rbtracer.installed) {
+    rb_add_event_hook(
+      event_hook,
+      RUBY_EVENT_CALL   <span style="color:#000;font-weight:bold">|</span> RUBY_EVENT_C_CALL <span style="color:#000;font-weight:bold">|</span>
+      RUBY_EVENT_RETURN <span style="color:#000;font-weight:bold">|</span> RUBY_EVENT_C_RETURN
+<span style="color:#999;font-weight:bold;font-style:italic">#ifdef RUBY_VM
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>      , <span style="color:#099">0</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#endif
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>    );
+    rbtracer.installed <span style="color:#000;font-weight:bold">=</span> <span style="color:#0086b3">true</span>;
+  }
+}</code></pre></div>
+<h3 id="rbtrace-hook">rbtrace hook</h3>
+
+<p>This is the actual <code>rbtrace</code>&rsquo;s hook that gets called by Ruby VM on method entries and
+returns:</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C" data-lang="C"><span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">void</span> event_hook(rb_event_flag_t event, VALUE data, VALUE self, ID mid, VALUE klass)</code></pre></div>
+<p>It:</p>
+
+<ul>
+<li>resolves the current context (method, class)</li>
+<li>and based on the tracer options:</li>
+<li>goes through the filters (tracers) to see if it should execute any of those</li>
+<li>records method entry/exit (limited stack depth) and times them, prints out if they&rsquo;re slower than threshold</li>
+<li>walks through registered expressions and evaluates them in the context of the caller</li>
+</ul>
+
+<p>The hook also supports several expressions passed via <code>-m</code> option, which
+are interesting for debugging:</p>
+
+<p><code>method_name(self)</code>, which inspects the value of &lsquo;self&rsquo;, so e.g. tracing <code>sleep(self)</code> in a Puma app:</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#008080">Kernel</span><span style="color:#998;font-style:italic">#sleep(self=#&lt;Puma::ThreadPool::Reaper:0x00561287c2a098...</span></code></pre></div>
+<p><code>method(__source__)</code> outputs the current source location:</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#008080">Kernel</span><span style="color:#998;font-style:italic">#sleep(__source__=&#34;/home/tiny/.gem/ruby/2.4.0/gems/puma-3.6.2/lib/puma/thread_pool.rb:230&#34;) &lt;1.001770&gt;</span></code></pre></div>
+<p><code>method_name(@ivar_name)</code> prints a value of an instance variable:</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#008080">Kernel</span><span style="color:#998;font-style:italic">#sleep(@timeout=1) &lt;1.001300&gt;</span></code></pre></div>
+<p>any other expression gets evaluated in context of of current object, as can be seen []:</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C" data-lang="C"><span style="color:#099">8</span><span style="color:#000;font-weight:bold">&lt;</span> <span style="color:#000;font-weight:bold">---</span> snip from rbtrace.c <span style="color:#000;font-weight:bold">---</span>
+snprintf(buffer, len<span style="color:#000;font-weight:bold">+</span><span style="color:#099">150</span>, <span style="color:#d14">&#34;(begin; ObjectSpace._id2ref(%ld).instance_eval{ %s  }; rescue Exception =&gt; e; e; end).inspect&#34;</span>, NUM2LONG(rb_obj_id(self)), expr);
+<span style="color:#099">8</span><span style="color:#000;font-weight:bold">&lt;</span> <span style="color:#000;font-weight:bold">--</span> snip <span style="color:#000;font-weight:bold">---</span></code></pre></div>
+<p>So for example <code>sleep(instance_variables)</code> will output:</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#008080">Kernel</span><span style="color:#998;font-style:italic">#sleep(instance_variables=[:@pool, :@timeout, :@running, :@thread]) &lt;1.001604&gt;</span></code></pre></div>
+<p>One thing that I was unable to get working was the GC tracing, as it relies
+on a <a href="https://github.com/tmm1/brew2deb/blob/master/packages/ruby/patches/gc-hooks.patch">patch</a> that no longer applies on 2.4 Ruby.
+However, Ruby now has <a href="https://github.com/ruby/ruby/blob/ruby_2_4/include/ruby/ruby.h#L2077-L2085">internal events related to GC</a>, so maybe it
+should be possible to patch <code>rbtrace</code> to use them.</p>
+
+<h2 id="performance-and-security">Performance and security</h2>
+
+<p>I was curious about the performance - besides security , it&rsquo;s the most common
+argument for or against running tracing or debugging tools in a production
+environment. So I wrote a simple script using
+<a href="https://github.com/evanphx/benchmark-ips">benchmark-ips</a>, then traced the
+process with <code>rbtrace -p PID -m 'Hash#key?'</code>, before sending it a signal, which
+started the benchmark:</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086b3">require</span> <span style="color:#d14">&#39;benchmark/ips&#39;</span>
+<span style="color:#0086b3">require</span> <span style="color:#d14">&#39;rbtrace&#39;</span>
+
+<span style="color:#000;font-weight:bold">def</span> <span style="color:#900;font-weight:bold">run</span>
+  n    <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">1_000_000</span>
+  h    <span style="color:#000;font-weight:bold">=</span> <span style="color:#008080">Hash</span><span style="color:#000;font-weight:bold">.</span>new
+  i    <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>
+
+  keys <span style="color:#000;font-weight:bold">=</span> <span style="color:#0086b3">Array</span><span style="color:#000;font-weight:bold">.</span>new(n) { <span style="color:#000;font-weight:bold">|</span>i<span style="color:#000;font-weight:bold">|</span> i }
+  keys<span style="color:#000;font-weight:bold">.</span>sample(n <span style="color:#000;font-weight:bold">&gt;&gt;</span> <span style="color:#099">1</span>)<span style="color:#000;font-weight:bold">.</span>each { <span style="color:#000;font-weight:bold">|</span>k<span style="color:#000;font-weight:bold">|</span> h<span style="color:#000;font-weight:bold">[</span>k<span style="color:#000;font-weight:bold">]</span> <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">true</span> }
+
+  <span style="color:#008080">Benchmark</span><span style="color:#000;font-weight:bold">.</span>ips <span style="color:#000;font-weight:bold">do</span> <span style="color:#000;font-weight:bold">|</span>x<span style="color:#000;font-weight:bold">|</span>
+    x<span style="color:#000;font-weight:bold">.</span>report { h<span style="color:#000;font-weight:bold">.</span>key?(keys<span style="color:#000;font-weight:bold">.</span>sample) }
+  <span style="color:#000;font-weight:bold">end</span>
+<span style="color:#000;font-weight:bold">end</span>
+
+go <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">false</span>
+
+<span style="color:#008080">Signal</span><span style="color:#000;font-weight:bold">.</span>trap(<span style="color:#d14">&#39;USR1&#39;</span>) { go <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">true</span> }
+
+<span style="color:#0086b3">puts</span> <span style="color:#008080">Process</span><span style="color:#000;font-weight:bold">.</span>pid
+<span style="color:#0086b3">sleep</span> <span style="color:#099">1</span> <span style="color:#000;font-weight:bold">while</span> <span style="color:#000;font-weight:bold">!</span>go
+run</code></pre></div>
+<p>And the results - without <code>require &quot;rbtrace&quot;</code>:</p>
+
+<pre><code>Warming up --------------------------------------
+        150.284k i/100ms
+Calculating -------------------------------------
+        2.120M (± 5.6%) i/s -     10.670M in   5.049265s
+</code></pre>
+
+<p>With <code>rbtrace</code> required, untraced process:</p>
+
+<pre><code>Warming up --------------------------------------
+        148.118k i/100ms
+Calculating -------------------------------------
+        2.177M (± 3.9%) i/s -     10.961M in   5.042478s
+</code></pre>
+
+<p>With <code>rbtrace</code> required, tracing <code>Hash#key?</code> (<code>rbtrace -p PID -m 'Hash#key?' &amp;&gt;/dev/null</code>):</p>
+
+<pre><code>Warming up --------------------------------------
+        5.678k i/100ms
+Calculating -------------------------------------
+        62.708k (± 2.6%) i/s -    317.968k in   5.074310s
+</code></pre>
+
+<p>The first two measurements suggest, that including <code>rbtrace</code> does not add any
+overhead to the process.  Which is exactly what we need - as long <code>rbtrace</code> is
+not used, it should not slow down the app.</p>
+
+<p>The last one shows the process slow down about 30x during tracing. While this
+may seem like a lot, it only lasts as long as the <code>rbtrace</code> is attached. It
+is also proportional to how often the traced method (and the hook) gets
+invoked, so for tracing <code>HTTP</code> requests or <code>SQL</code> queries, the overhead should
+be negligible.</p>
+
+<p>What about safety? I&rsquo;m not a security expert, so I can&rsquo;t really tell - caveat
+emptor! It seems to me that the attacker would have to already have access to
+the box (to send commands to the process via the message queue), or execute
+arbitrary methods, so the extension only opens channels that are already
+irrelevant in the case there is a vulnerability. I&rsquo;d definitely love to hear
+from someone with security experience on this one, though&hellip;</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p><code>rbtrace</code> is a powerful tool for production Ruby debugging - be it memory
+leaks, multi-threaded programs, or slow external API calls. And its internals
+provide a look into how to attach a C extension into the heart of
+the Ruby VM - definitely something worth knowing about.</p>
+
+<p>How do you use <code>rbtrace</code>? Are you solving Ruby performance issues in prod? Or
+just like to talk about Ruby?  Shoot me a mail to (balazs at kutilovi dot cz),
+or a <a href="https://twitter.com/balazs_kutil">tweet</a>! I&rsquo;ll be happy to chat.</p>
+    </article>
+    </main><footer>
+  
+  <nav>
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/posts/ruby-tracing-part-one-bpf/">&laquo; Ruby tracing part one - BPF</a>
+    
+
+    
+      <a class="basic-alignment" href="https://balazs.kutilovi.cz/posts/starting-a-library/">Starting a library &raquo;</a>
+    
+  </nav>
+  
+</footer>
+</body>
+
+</html>
