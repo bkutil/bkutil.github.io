@@ -1,304 +1,146 @@
-<html>
-<base href="https://balazs.kutilovi.cz/">
-<link rel="canonical" href="https://balazs.kutilovi.cz/posts/printf-debugging-basics-in-ruby/">
-
-<meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="chrome=1">
-<meta name="HandheldFriendly" content="True">
-<meta name="MobileOptimized" content="320">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="referrer" content="no-referrer">
-
-<title>Printf debugging basics in Ruby</title>
-
-
-
-<style>
-body {
-  max-width: 620px;
-  padding: 2em;
-  font-size: 18px;
-  line-height: 1.5;
-  margin: 1.5em auto;
-}
-
-blockquote {
-  padding-left: 1.5em;
-  border-left: 3px #ddd solid;
-}
-
-nav {
-  margin: 0 0 1.5em 0;
-}
-
-footer {
-  margin: 1.5em 0 0 0;
-}
-
-p>code, pre, .highlight {
-  font-size: 16px;
-  border: 1px solid #f0f0f0;
-  padding: 0 0.5em;
-  overflow-y: scroll;
-}
-</style>
-
-<body><header>
-  <nav>
-    <a href="https://balazs.kutilovi.cz/" title="Home">Home</a>
-    
-    <a href="/posts/" title=""></a>
-    
-    <a href="/about/" title="">About</a>
-    
-    <a href="/weekly-notes/" title="">Weekly notes</a>
-    
-  <nav>
-</header>
-<main>
-    <article>
-      <h1> Printf debugging basics in Ruby </h1>
-
-      <p></p>
-
-<p>Sometimes, a <code>printf</code> is enough. Although IDEs usually integrate with a debugger
+<!doctype html><html lang=en-us dir=ltr><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer"><title>Printf debugging basics in Ruby | Balázs' blog</title>
+<link rel=canonical href=https://balazs.kutilovi.cz/posts/printf-debugging-basics-in-ruby/><link href=https://balazs.kutilovi.cz/index.xml rel=alternate type=application/rss+xml title="Balázs' blog"><link rel="shortcut icon" type=image/svg+xml href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20fill=%22none%22%20viewBox=%220%200%2024%2024%22%20stroke-width=%221.5%22%20stroke=%22currentcolor%22%20color=%22grey%22%3E%3Cpath%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M10.34%2015.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5%204.5.0%20110-9h.75c.704.0%201.402-.03%202.09-.09m0%209.18c.253.962.584%201.892.985%202.783.247.55.06%201.21-.463%201.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845%2020.845.0%2001-1.44-4.282m3.102.069a18.03%2018.03.0%2001-.59-4.59c0-1.586.205-3.124.59-4.59m0%209.18a23.848%2023.848.0%20018.835%202.535M10.34%206.66a23.847%2023.847.0%20008.835-2.535m0%200A23.74%2023.74.0%200018.795%203m.38%201.125a23.91%2023.91.0%20011.014%205.395m-1.014%208.855c-.118.38-.245.754-.38%201.125m.38-1.125a23.91%2023.91.0%20001.014-5.395m0-3.46c.495.413.811%201.035.811%201.73s-.316%201.317-.811%201.73m0-3.46a24.347%2024.347.0%20010%203.46%22/%3E%3C/svg%3E"><style>/*!modern-normalize v2.0.0 | MIT License | https://github.com/sindresorhus/modern-normalize*/*,::before,::after{box-sizing:border-box}html{font-family:system-ui,segoe ui,Roboto,Helvetica,Arial,sans-serif,apple color emoji,segoe ui emoji;line-height:1.15;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4}body{margin:0}hr{height:0;color:inherit}abbr[title]{text-decoration:underline dotted}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:ui-monospace,SFMono-Regular,Consolas,liberation mono,Menlo,monospace;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit}button,input,optgroup,select,textarea{font-family:inherit;font-size:100%;line-height:1.15;margin:0}button,select{text-transform:none}button,[type=button],[type=reset],[type=submit]{-webkit-appearance:button}::-moz-focus-inner{border-style:none;padding:0}:-moz-focusring{outline:1px dotted ButtonText}:-moz-ui-invalid{box-shadow:none}legend{padding:0}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}</style><style>html{line-height:1.5}h1{font-size:2.136rem}h2{font-size:1.898rem}h3{font-size:1.688rem}body{max-width:32rem;padding:.74rem;margin:auto}blockquote{margin-left:1.688rem;padding-left:.74rem;border-left:.461rem #ddd solid}p code{font-size:.936rem;margin:0 .288rem}img{max-width:100%;height:auto}pre{font-size:.74rem;margin:1.688rem 0;padding:.936rem;overflow-x:scroll}footer{margin:1.688rem 0}footer nav{margin:1.688rem 0}</style></head><body><header><h1>Balázs' blog</h1><nav><span><a href=/>Posts</a>
+</span><span><a href=/about/>About</a></span></nav></header><main><h2>Printf debugging basics in Ruby</h2><time datetime=2017-01-26T06:02:12+01:00>January 26, 2017</time><p>Sometimes, a <code>printf</code> is enough. Although IDEs usually integrate with a debugger
 and allow you to setup complex breakpoints, the power of printing out statements
 shouldn&rsquo;t be underestimated. The learning curve is low and all the
 required tools are there. No need to install gems, or spend money on
-an IDE.</p>
-
-<p>Let&rsquo;s look at some <code>printf</code> style tools that&rsquo;s good to have in your
-debugging toolbox.  We&rsquo;ll be going from the simplest ones for
-<a href="#output">inspecting objects</a>, <a href="#logging">logging</a>, going through
-<a href="#context">execution context</a> and looking up <a href="#sources">definitions</a> of
-methods.</p>
-
-<h2 id="output-a-name-output-a">Output <a name="output"></a></h2>
-
-<p>The following methods help with inspecting objects and data structures and putting
-them on the screen.</p>
-
-<h3 id="p">p</h3>
-
-<p><a href="http://www.ruby-doc.org/core-2.1.2/Kernel.html#method-i-p">p</a> is your friend.
-It <a href="http://ruby-doc.org/core-2.1.2/Object.html#method-i-inspect">inspects</a> an
+an IDE.</p><p>Let&rsquo;s look at some <code>printf</code> style tools that&rsquo;s good to have in your
+debugging toolbox. We&rsquo;ll be going from the simplest ones for
+<a href=#output>inspecting objects</a>, <a href=#logging>logging</a>, going through
+<a href=#context>execution context</a> and looking up <a href=#sources>definitions</a> of
+methods.</p><h2 id=output-a-nameoutputa>Output</h2><p>The following methods help with inspecting objects and data structures and putting
+them on the screen.</p><h3 id=p>p</h3><p><a href=http://www.ruby-doc.org/core-2.1.2/Kernel.html#method-i-p>p</a> is your friend.
+It <a href=http://ruby-doc.org/core-2.1.2/Object.html#method-i-inspect>inspects</a> an
 object. In other words, it calls object&rsquo;s <code>inspect</code> method, which returns
 its string representation. It then stdouts whatever it finds, be it a number -
 like <code>10</code>, a list or an array, like <code>1, 2, 3, 4</code> or a hash
-of key-value pairs like <code>'foo' : 'bar'</code> and <code>'bar' : 'baz'</code>:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086b3">p</span> number
-<span style="color:#000;font-weight:bold">=&gt;</span> <span style="color:#099">10</span>
-
-<span style="color:#0086b3">p</span> list
-<span style="color:#000;font-weight:bold">=&gt;</span> <span style="color:#000;font-weight:bold">[</span><span style="color:#099">1</span>, <span style="color:#099">2</span>, <span style="color:#099">3</span>, <span style="color:#099">4</span><span style="color:#000;font-weight:bold">]</span>
-
-<span style="color:#0086b3">p</span> <span style="color:#0086b3">hash</span>
-<span style="color:#000;font-weight:bold">=&gt;</span> {<span style="color:#990073">:foo</span><span style="color:#000;font-weight:bold">=&gt;</span><span style="color:#990073">:bar</span>, <span style="color:#990073">:bar</span><span style="color:#000;font-weight:bold">=&gt;</span><span style="color:#990073">:baz</span>}</code></pre></div>
-<p><code>p</code> also accepts multiple arguments and each of those will be <code>inspect</code>ed in turn:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086b3">p</span> number, list
-<span style="color:#000;font-weight:bold">=&gt;</span> <span style="color:#099">10</span>
-  <span style="color:#000;font-weight:bold">[</span><span style="color:#099">1</span>, <span style="color:#099">2</span>, <span style="color:#099">3</span>, <span style="color:#099">4</span><span style="color:#000;font-weight:bold">]</span></code></pre></div>
-<p>To send info to stderr, you can use the <code>warn</code> method. <code>warn</code> is
+of key-value pairs like <code>'foo' : 'bar'</code> and <code>'bar' : 'baz'</code>:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>p</span> number
+</span></span><span style=display:flex><span>=&gt; <span style=color:#00d;font-weight:700>10</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#038>p</span> list
+</span></span><span style=display:flex><span>=&gt; [<span style=color:#00d;font-weight:700>1</span>, <span style=color:#00d;font-weight:700>2</span>, <span style=color:#00d;font-weight:700>3</span>, <span style=color:#00d;font-weight:700>4</span>]
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#038>p</span> <span style=color:#038>hash</span>
+</span></span><span style=display:flex><span>=&gt; {<span style=color:#a60;background-color:#fff0f0>:foo</span>=&gt;<span style=color:#a60;background-color:#fff0f0>:bar</span>, <span style=color:#a60;background-color:#fff0f0>:bar</span>=&gt;<span style=color:#a60;background-color:#fff0f0>:baz</span>}
+</span></span></code></pre></div><p><code>p</code> also accepts multiple arguments and each of those will be <code>inspect</code>ed in turn:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>p</span> number, list
+</span></span><span style=display:flex><span>=&gt; <span style=color:#00d;font-weight:700>10</span>
+</span></span><span style=display:flex><span>  [<span style=color:#00d;font-weight:700>1</span>, <span style=color:#00d;font-weight:700>2</span>, <span style=color:#00d;font-weight:700>3</span>, <span style=color:#00d;font-weight:700>4</span>]
+</span></span></code></pre></div><p>To send info to stderr, you can use the <code>warn</code> method. <code>warn</code> is
 useful as the stream representing the standard error is not buffered. However,
 unlike <code>p</code>, it does not call <code>inspect</code> automatically, so you need to
-call it explicitly.</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086b3">warn</span> <span style="color:#0086b3">hash</span><span style="color:#000;font-weight:bold">.</span>inspect
-<span style="color:#000;font-weight:bold">=&gt;</span> {<span style="color:#990073">:foo</span><span style="color:#000;font-weight:bold">=&gt;</span><span style="color:#990073">:bar</span>, <span style="color:#990073">:bar</span><span style="color:#000;font-weight:bold">=&gt;</span><span style="color:#990073">:baz</span>}</code></pre></div>
-<p>(Tip: unbufferred writes to standard output can be enabled by setting
-<code>STDOUT.sync = true</code>)</p>
-
-<h3 id="json-pretty-generate">JSON.pretty_generate</h3>
-
-<p>When viewing nested hashes or complex data structures, the output of <code>p</code>
+call it explicitly.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>warn</span> <span style=color:#038>hash</span>.inspect
+</span></span><span style=display:flex><span>=&gt; {<span style=color:#a60;background-color:#fff0f0>:foo</span>=&gt;<span style=color:#a60;background-color:#fff0f0>:bar</span>, <span style=color:#a60;background-color:#fff0f0>:bar</span>=&gt;<span style=color:#a60;background-color:#fff0f0>:baz</span>}
+</span></span></code></pre></div><p>(Tip: unbufferred writes to standard output can be enabled by setting
+<code>STDOUT.sync = true</code>)</p><h3 id=jsonpretty_generate>JSON.pretty_generate</h3><p>When viewing nested hashes or complex data structures, the output of <code>p</code>
 can be hard to read.
-<a href="http://www.ruby-doc.org/stdlib-2.1.2/libdoc/json/rdoc/JSON.html#method-i-pretty_generate">JSON</a>
-to the rescue! It pretty-prints the representation of any object that can be converted to <code>JSON</code> format.</p>
-
-<p>First, require the <code>JSON</code> library:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086b3">require</span> <span style="color:#d14">&#39;json&#39;</span></code></pre></div>
-<p>Then:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086b3">puts</span> <span style="color:#008080">JSON</span><span style="color:#000;font-weight:bold">.</span>pretty_generate(<span style="color:#0086b3">hash</span>)
-<span style="color:#000;font-weight:bold">=&gt;</span> {
-    <span style="color:#d14">&#34;foo&#34;</span>: <span style="color:#d14">&#34;bar&#34;</span>,
-    <span style="color:#d14">&#34;bar&#34;</span>: <span style="color:#d14">&#34;baz&#34;</span>
- }</code></pre></div>
-<h3 id="logger-a-name-logging-a">Logger <a name="logging"></a></h3>
-
-<p>Using real logging instead of <code>p</code> or <code>warn</code> is handy when debugging
+<a href=http://www.ruby-doc.org/stdlib-2.1.2/libdoc/json/rdoc/JSON.html#method-i-pretty_generate>JSON</a>
+to the rescue! It pretty-prints the representation of any object that can be converted to <code>JSON</code> format.</p><p>First, require the <code>JSON</code> library:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>require</span> <span style=color:#d20;background-color:#fff0f0>&#39;json&#39;</span>
+</span></span></code></pre></div><p>Then:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>puts</span> <span style=color:#036;font-weight:700>JSON</span>.pretty_generate(<span style=color:#038>hash</span>)
+</span></span><span style=display:flex><span>=&gt; {
+</span></span><span style=display:flex><span>    <span style=color:#d20;background-color:#fff0f0>&#34;foo&#34;</span>: <span style=color:#d20;background-color:#fff0f0>&#34;bar&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#d20;background-color:#fff0f0>&#34;bar&#34;</span>: <span style=color:#d20;background-color:#fff0f0>&#34;baz&#34;</span>
+</span></span><span style=display:flex><span> }
+</span></span></code></pre></div><h3 id=logger-a-namelogginga>Logger</h3><p>Using real logging instead of <code>p</code> or <code>warn</code> is handy when debugging
 existing applications. The ruby
-<a href="http://www.ruby-doc.org/stdlib-2.1.2/libdoc/logger/rdoc/Logger.html">Logger</a>
+<a href=http://www.ruby-doc.org/stdlib-2.1.2/libdoc/logger/rdoc/Logger.html>Logger</a>
 has a simple interface. To log a message with certain log level, simply call an
-appropriate method:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">log<span style="color:#000;font-weight:bold">.</span>fatal(<span style="color:#d14">&#34;Oh no, it crashed.&#34;</span>)
-log<span style="color:#000;font-weight:bold">.</span>error(<span style="color:#d14">&#34;This is an error.&#34;</span>)
-log<span style="color:#000;font-weight:bold">.</span>warn(<span style="color:#d14">&#34;This is a warning.&#34;</span>)
-log<span style="color:#000;font-weight:bold">.</span>info(<span style="color:#d14">&#34;Just wanted to say hi.&#34;</span>)
-log<span style="color:#000;font-weight:bold">.</span>debug(<span style="color:#d14">&#34;Too many details here!&#34;</span>)</code></pre></div>
-<p>Frameworks like Rails often expose a logger that extends or at least has the
-same interface as the one from the Ruby standard library:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#008080">Rails</span><span style="color:#000;font-weight:bold">.</span>logger<span style="color:#000;font-weight:bold">.</span>info(<span style="color:#d14">&#34;Logging info about a web request&#34;</span>)<span style="color:#000;font-weight:bold">.</span></code></pre></div>
-<p>but of course, you can create your own logger:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086b3">require</span> <span style="color:#d14">&#39;logger&#39;</span>
-log <span style="color:#000;font-weight:bold">=</span> <span style="color:#008080">Logger</span><span style="color:#000;font-weight:bold">.</span>new(<span style="color:#d14">&#34;debug.log&#34;</span>)</code></pre></div>
-<p>Useful trick, especially when there are many messages already being logged, can
-be to add a &lsquo;tag&rsquo; to the message body</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">log<span style="color:#000;font-weight:bold">.</span>debug(<span style="color:#d14">&#34;FOO This is important debug information.&#34;</span>)</code></pre></div>
-<p>that can be easily grepped for:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ tail -f debug.log | grep FOO
-D, <span style="color:#000;font-weight:bold">[</span><span style="color:#099">2014</span>-06-22T01:24:27.611669 #3814<span style="color:#000;font-weight:bold">]</span> DEBUG -- : FOO This is important debug information.</code></pre></div>
-<p>or to simply raise the minimal log level, so only messages above this level are
-actually written into the logfile:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">log<span style="color:#000;font-weight:bold">.</span>level <span style="color:#000;font-weight:bold">=</span> <span style="color:#008080">Logger</span><span style="color:#000;font-weight:bold">::</span><span style="color:#008080">WARN</span></code></pre></div>
-<h2 id="state-and-context-a-name-context-a">State and context <a name="context"></a></h2>
-
-<h3 id="current-time-with-microsecond-precision">Current time with microsecond precision</h3>
-
-<p>Sometimes a precise time stamp can reveal relative ordering of execution, or
-helps spotting slow parts of the program</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#008080">Time</span><span style="color:#000;font-weight:bold">.</span>now<span style="color:#000;font-weight:bold">.</span>to_f
-<span style="color:#000;font-weight:bold">=&gt;</span> <span style="color:#099">1402595441</span><span style="color:#000;font-weight:bold">.</span><span style="color:#099">01</span><span style="color:#099">877</span></code></pre></div>
-<p>returns the <a href="http://www.ruby-doc.org/core-2.1.2/Time.html#method-i-to_f">current
+appropriate method:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span>log.fatal(<span style=color:#d20;background-color:#fff0f0>&#34;Oh no, it crashed.&#34;</span>)
+</span></span><span style=display:flex><span>log.error(<span style=color:#d20;background-color:#fff0f0>&#34;This is an error.&#34;</span>)
+</span></span><span style=display:flex><span>log.warn(<span style=color:#d20;background-color:#fff0f0>&#34;This is a warning.&#34;</span>)
+</span></span><span style=display:flex><span>log.info(<span style=color:#d20;background-color:#fff0f0>&#34;Just wanted to say hi.&#34;</span>)
+</span></span><span style=display:flex><span>log.debug(<span style=color:#d20;background-color:#fff0f0>&#34;Too many details here!&#34;</span>)
+</span></span></code></pre></div><p>Frameworks like Rails often expose a logger that extends or at least has the
+same interface as the one from the Ruby standard library:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#036;font-weight:700>Rails</span>.logger.info(<span style=color:#d20;background-color:#fff0f0>&#34;Logging info about a web request&#34;</span>).
+</span></span></code></pre></div><p>but of course, you can create your own logger:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>require</span> <span style=color:#d20;background-color:#fff0f0>&#39;logger&#39;</span>
+</span></span><span style=display:flex><span>log = <span style=color:#036;font-weight:700>Logger</span>.new(<span style=color:#d20;background-color:#fff0f0>&#34;debug.log&#34;</span>)
+</span></span></code></pre></div><p>Useful trick, especially when there are many messages already being logged, can
+be to add a &rsquo;tag&rsquo; to the message body</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span>log.debug(<span style=color:#d20;background-color:#fff0f0>&#34;FOO This is important debug information.&#34;</span>)
+</span></span></code></pre></div><p>that can be easily grepped for:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-shell data-lang=shell><span style=display:flex><span>$ tail -f debug.log | grep FOO
+</span></span><span style=display:flex><span>D, [2014-06-22T01:24:27.611669 <span style=color:#888>#3814] DEBUG -- : FOO This is important debug information.</span>
+</span></span></code></pre></div><p>or to simply raise the minimal log level, so only messages above this level are
+actually written into the logfile:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span>log.level = <span style=color:#036;font-weight:700>Logger</span>::<span style=color:#036;font-weight:700>WARN</span>
+</span></span></code></pre></div><h2 id=state-and-context-a-namecontexta>State and context</h2><h3 id=current-time-with-microsecond-precision>Current time with microsecond precision</h3><p>Sometimes a precise time stamp can reveal relative ordering of execution, or
+helps spotting slow parts of the program</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#036;font-weight:700>Time</span>.now.to_f
+</span></span><span style=display:flex><span>=&gt; <span style=color:#00d;font-weight:700>1402595441</span>.<span style=color:#00d;font-weight:700>01</span><span style=color:#00d;font-weight:700>877</span>
+</span></span></code></pre></div><p>returns the <a href=http://www.ruby-doc.org/core-2.1.2/Time.html#method-i-to_f>current
 time</a> as a
 UNIX time stamp with microseconds. Time also implements <code>nsec</code> for even
-greater precision.</p>
-
-<h3 id="current-process-info">Current process info</h3>
-
-<p>The <a href="http://www.ruby-doc.org/core-2.1.2/Process.html">process</a> pid and the
+greater precision.</p><h3 id=current-process-info>Current process info</h3><p>The <a href=http://www.ruby-doc.org/core-2.1.2/Process.html>process</a> pid and the
 (real) uid and gid are, somewhat unsurprisingly, accessible via
-<code>Process.pid</code>, <code>Process.uid</code> and <code>Process.gid</code>.</p>
-
-<h3 id="current-values-of-instance-variables">Current values of instance variables</h3>
-
-<p>In Ruby, it is possible to get current values of object <a href="http://ruby-doc.org/core-2.1.2/Object.html#method-i-instance_variables">instance
+<code>Process.pid</code>, <code>Process.uid</code> and <code>Process.gid</code>.</p><h3 id=current-values-of-instance-variables>Current values of instance variables</h3><p>In Ruby, it is possible to get current values of object <a href=http://ruby-doc.org/core-2.1.2/Object.html#method-i-instance_variables>instance
 variables</a>
-in a very simple way:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086b3">instance_variables</span><span style="color:#000;font-weight:bold">.</span>each { <span style="color:#000;font-weight:bold">|</span><span style="color:#0086b3">name</span><span style="color:#000;font-weight:bold">|</span> <span style="color:#0086b3">puts</span> <span style="color:#d14">&#34;</span><span style="color:#d14">#{</span><span style="color:#0086b3">name</span><span style="color:#d14">}</span><span style="color:#d14">=</span><span style="color:#d14">#{</span><span style="color:#0086b3">instance_variable_get</span>(<span style="color:#0086b3">name</span>)<span style="color:#d14">}</span><span style="color:#d14">&#34;</span> }</code></pre></div>
-<h3 id="caller">Caller</h3>
-
-<p>Where is this method called from?
-<a href="http://www.ruby-doc.org/core-2.1.2/Kernel.html#method-i-caller_locations">caller</a>
+in a very simple way:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>instance_variables</span>.each { |<span style=color:#038>name</span>| <span style=color:#038>puts</span> <span style=color:#d20;background-color:#fff0f0>&#34;</span><span style=color:#33b;background-color:#fff0f0>#{</span><span style=color:#038>name</span><span style=color:#33b;background-color:#fff0f0>}</span><span style=color:#d20;background-color:#fff0f0>=</span><span style=color:#33b;background-color:#fff0f0>#{</span><span style=color:#038>instance_variable_get</span>(<span style=color:#038>name</span>)<span style=color:#33b;background-color:#fff0f0>}</span><span style=color:#d20;background-color:#fff0f0>&#34;</span> }
+</span></span></code></pre></div><h3 id=caller>Caller</h3><p>Where is this method called from?
+<a href=http://www.ruby-doc.org/core-2.1.2/Kernel.html#method-i-caller_locations>caller</a>
 to the rescue! It is an array that contains the current backtrace.
 <code>caller[0]</code> is the current method&rsquo;s caller, <code>caller[1]</code> the caller&rsquo;s
-caller, etc&hellip;</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086b3">caller</span>
-<span style="color:#000;font-weight:bold">=&gt;</span> <span style="color:#000;font-weight:bold">[</span><span style="color:#d14">&#34;/home/bkutil/.gem/ruby/2.1.0/gems/pry-0.9.12.6/lib/pry/pry_instance.rb:328:in `eval&#39;&#34;</span>,
-  <span style="color:#d14">&#34;/home/bkutil/.gem/ruby/2.1.0/gems/pry-0.9.12.6/lib/pry/pry_instance.rb:328:in `evaluate_ruby&#39;&#34;</span>,
-  <span style="color:#d14">&#34;/home/bkutil/.gem/ruby/2.1.0/gems/pry-0.9.12.6/lib/pry/pry_instance.rb:278:in `re&#39;&#34;</span>,
-  <span style="color:#d14">&#34;/home/bkutil/.gem/ruby/2.1.0/gems/pry-0.9.12.6/lib/pry/pry_instance.rb:254:in `rep&#39;&#34;</span>,
-  <span style="color:#d14">&#34;/home/bkutil/.gem/ruby/2.1.0/gems/pry-0.9.12.6/lib/pry/pry_instance.rb:234:in `block (3 levels) in repl&#39;&#34;</span>,</code></pre></div>
-<p>In cases you&rsquo;re fine with a jump or the program exiting, <code>raise</code> can do
-the same for you.</p>
-
-<h2 id="sources-a-name-sources-a">Sources <a name="sources"></a></h2>
-
-<h3 id="current-file-and-line">Current file and line</h3>
-
-<p>For logging the current file and line, Ruby provides two constants
-<code>__FILE__</code> and <code>__LINE__</code>. A simple ruby script <code>test.rb</code>:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#998;font-style:italic">#!/usr/bin/env ruby</span>
-<span style="color:#0086b3">warn</span> <span style="color:#d14">&#34;I&#39;m in </span><span style="color:#d14">#{</span><span style="color:#999">__FILE__</span><span style="color:#d14">}</span><span style="color:#d14"> on line </span><span style="color:#d14">#{</span><span style="color:#999">__LINE__</span><span style="color:#d14">}</span><span style="color:#d14">&#34;</span></code></pre></div>
-<p>will output <code>I'm in ./test.rb on line 2</code>. This works pretty well for
+caller, etc&mldr;</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>caller</span>
+</span></span><span style=display:flex><span>=&gt; [<span style=color:#d20;background-color:#fff0f0>&#34;/home/bkutil/.gem/ruby/2.1.0/gems/pry-0.9.12.6/lib/pry/pry_instance.rb:328:in `eval&#39;&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#d20;background-color:#fff0f0>&#34;/home/bkutil/.gem/ruby/2.1.0/gems/pry-0.9.12.6/lib/pry/pry_instance.rb:328:in `evaluate_ruby&#39;&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#d20;background-color:#fff0f0>&#34;/home/bkutil/.gem/ruby/2.1.0/gems/pry-0.9.12.6/lib/pry/pry_instance.rb:278:in `re&#39;&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#d20;background-color:#fff0f0>&#34;/home/bkutil/.gem/ruby/2.1.0/gems/pry-0.9.12.6/lib/pry/pry_instance.rb:254:in `rep&#39;&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#d20;background-color:#fff0f0>&#34;/home/bkutil/.gem/ruby/2.1.0/gems/pry-0.9.12.6/lib/pry/pry_instance.rb:234:in `block (3 levels) in repl&#39;&#34;</span>,
+</span></span></code></pre></div><p>In cases you&rsquo;re fine with a jump or the program exiting, <code>raise</code> can do
+the same for you.</p><h2 id=sources-a-namesourcesa>Sources</h2><h3 id=current-file-and-line>Current file and line</h3><p>For logging the current file and line, Ruby provides two constants
+<code>__FILE__</code> and <code>__LINE__</code>. A simple ruby script <code>test.rb</code>:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#888>#!/usr/bin/env ruby</span>
+</span></span><span style=display:flex><span><span style=color:#038>warn</span> <span style=color:#d20;background-color:#fff0f0>&#34;I&#39;m in </span><span style=color:#33b;background-color:#fff0f0>#{</span>__FILE__<span style=color:#33b;background-color:#fff0f0>}</span><span style=color:#d20;background-color:#fff0f0> on line </span><span style=color:#33b;background-color:#fff0f0>#{</span>__LINE__<span style=color:#33b;background-color:#fff0f0>}</span><span style=color:#d20;background-color:#fff0f0>&#34;</span>
+</span></span></code></pre></div><p>will output <code>I'm in ./test.rb on line 2</code>. This works pretty well for
 your own code, but what if you want to know where a library method comes
-from?</p>
-
-<h3 id="source-location">Source location</h3>
-
-<p><a href="http://www.ruby-doc.org/core-2.1.2/Method.html#method-i-source_location">source_location</a>
+from?</p><h3 id=source-location>Source location</h3><p><a href=http://www.ruby-doc.org/core-2.1.2/Method.html#method-i-source_location>source_location</a>
 is super useful when you&rsquo;re digging into code of a library or an existing app - it
-shows where a certain method is defined.</p>
-
-<p>Suppose you have code that creates a ftp connection via <code>Net::FTP.new</code> and
-logs in using <code>login</code> method.</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086b3">require</span> <span style="color:#d14">&#39;net/ftp&#39;</span>
-ftp <span style="color:#000;font-weight:bold">=</span> <span style="color:#008080">Net</span><span style="color:#000;font-weight:bold">::</span><span style="color:#008080">FTP</span><span style="color:#000;font-weight:bold">.</span>new(<span style="color:#d14">&#34;ftp://example.com&#34;</span>)
-ftp<span style="color:#000;font-weight:bold">.</span>login</code></pre></div>
-<p>and for some reason or other, you&rsquo;re interested in getting at the sources of
-the <code>login</code> method.</p>
-
-<p>First, you&rsquo;ll need to get an object representing the method.
-Calling <code>method</code> on the <code>ftp</code> is the way to go:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">m <span style="color:#000;font-weight:bold">=</span> ftp<span style="color:#000;font-weight:bold">.</span>method(<span style="color:#990073">:login</span>)
-<span style="color:#000;font-weight:bold">=&gt;</span> <span style="color:#998;font-style:italic">#&lt;Method: Net::FTP#login&gt;</span></code></pre></div>
-<p>then, <code>m.source_location</code> will reveal the file and line, where the
-method is defined:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">m<span style="color:#000;font-weight:bold">.</span>source_location
-<span style="color:#000;font-weight:bold">=&gt;</span> <span style="color:#000;font-weight:bold">[</span><span style="color:#d14">&#34;/home/bkutil/.rubies/ruby-2.1.0/lib/ruby/2.1.0/net/ftp.rb&#34;</span>, <span style="color:#099">453</span><span style="color:#000;font-weight:bold">]</span></code></pre></div>
-<p>and indeed, there it is:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#099">453</span> <span style="color:#000;font-weight:bold">def</span> <span style="color:#900;font-weight:bold">login</span>(user <span style="color:#000;font-weight:bold">=</span> <span style="color:#d14">&#34;anonymous&#34;</span>, passwd <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">nil</span>, acct <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">nil</span>)
-<span style="color:#099">454</span>   <span style="color:#000;font-weight:bold">if</span> user <span style="color:#000;font-weight:bold">==</span> <span style="color:#d14">&#34;anonymous&#34;</span> <span style="color:#000;font-weight:bold">and</span> passwd <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">nil</span>
-<span style="color:#099">455</span>     passwd <span style="color:#000;font-weight:bold">=</span> <span style="color:#d14">&#34;anonymous@&#34;</span>
-<span style="color:#099">456</span>   <span style="color:#000;font-weight:bold">end</span>
-<span style="color:#099">567</span> <span style="color:#000;font-weight:bold">...</span></code></pre></div>
-<p>Similarly, given a class (which is also an object in ruby), one can look up the
+shows where a certain method is defined.</p><p>Suppose you have code that creates a ftp connection via <code>Net::FTP.new</code> and
+logs in using <code>login</code> method.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>require</span> <span style=color:#d20;background-color:#fff0f0>&#39;net/ftp&#39;</span>
+</span></span><span style=display:flex><span>ftp = <span style=color:#036;font-weight:700>Net</span>::<span style=color:#036;font-weight:700>FTP</span>.new(<span style=color:#d20;background-color:#fff0f0>&#34;ftp://example.com&#34;</span>)
+</span></span><span style=display:flex><span>ftp.login
+</span></span></code></pre></div><p>and for some reason or other, you&rsquo;re interested in getting at the sources of
+the <code>login</code> method.</p><p>First, you&rsquo;ll need to get an object representing the method.
+Calling <code>method</code> on the <code>ftp</code> is the way to go:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span>m = ftp.method(<span style=color:#a60;background-color:#fff0f0>:login</span>)
+</span></span><span style=display:flex><span>=&gt; <span style=color:#888>#&lt;Method: Net::FTP#login&gt;</span>
+</span></span></code></pre></div><p>then, <code>m.source_location</code> will reveal the file and line, where the
+method is defined:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span>m.source_location
+</span></span><span style=display:flex><span>=&gt; [<span style=color:#d20;background-color:#fff0f0>&#34;/home/bkutil/.rubies/ruby-2.1.0/lib/ruby/2.1.0/net/ftp.rb&#34;</span>, <span style=color:#00d;font-weight:700>453</span>]
+</span></span></code></pre></div><p>and indeed, there it is:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#00d;font-weight:700>453</span> <span style=color:#080;font-weight:700>def</span> <span style=color:#06b;font-weight:700>login</span>(user = <span style=color:#d20;background-color:#fff0f0>&#34;anonymous&#34;</span>, passwd = <span style=color:#080>nil</span>, acct = <span style=color:#080>nil</span>)
+</span></span><span style=display:flex><span><span style=color:#00d;font-weight:700>454</span>   <span style=color:#080;font-weight:700>if</span> user == <span style=color:#d20;background-color:#fff0f0>&#34;anonymous&#34;</span> <span style=color:#080>and</span> passwd == <span style=color:#080>nil</span>
+</span></span><span style=display:flex><span><span style=color:#00d;font-weight:700>455</span>     passwd = <span style=color:#d20;background-color:#fff0f0>&#34;anonymous@&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#00d;font-weight:700>456</span>   <span style=color:#080;font-weight:700>end</span>
+</span></span><span style=display:flex><span><span style=color:#00d;font-weight:700>567</span> ...
+</span></span></code></pre></div><p>Similarly, given a class (which is also an object in ruby), one can look up the
 sources of one of its class methods (aka static methods). Here is an example
-with <code>Net::HTTP</code> <code>get</code> method:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086b3">require</span> <span style="color:#d14">&#39;net/http&#39;</span>
-<span style="color:#008080">Net</span><span style="color:#000;font-weight:bold">::</span><span style="color:#008080">HTTP</span><span style="color:#000;font-weight:bold">.</span>method(<span style="color:#990073">:get</span>)<span style="color:#000;font-weight:bold">.</span>source_location
-<span style="color:#000;font-weight:bold">=&gt;</span> <span style="color:#000;font-weight:bold">[</span><span style="color:#d14">&#34;/home/bkutil/.rubies/ruby-2.1.0/lib/ruby/2.1.0/net/http.rb&#34;</span>, <span style="color:#099">454</span><span style="color:#000;font-weight:bold">]</span></code></pre></div>
-<p>There are three small gotchas:</p>
-
-<p>First, this approach above won&rsquo;t work for instance methods defined in a Ruby
+with <code>Net::HTTP</code> <code>get</code> method:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>require</span> <span style=color:#d20;background-color:#fff0f0>&#39;net/http&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#036;font-weight:700>Net</span>::<span style=color:#036;font-weight:700>HTTP</span>.method(<span style=color:#a60;background-color:#fff0f0>:get</span>).source_location
+</span></span><span style=display:flex><span>=&gt; [<span style=color:#d20;background-color:#fff0f0>&#34;/home/bkutil/.rubies/ruby-2.1.0/lib/ruby/2.1.0/net/http.rb&#34;</span>, <span style=color:#00d;font-weight:700>454</span>]
+</span></span></code></pre></div><p>There are three small gotchas:</p><p>First, this approach above won&rsquo;t work for instance methods defined in a Ruby
 module. A module in Ruby cannot be instantiated, so instead of using
-<code>method</code>, <code>instance_method</code> is needed to get the method object:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086b3">require</span> <span style="color:#d14">&#39;forwardable&#39;</span>
-
-<span style="color:#008080">Forwardable</span><span style="color:#000;font-weight:bold">.</span>method(<span style="color:#990073">:delegate</span>)
-<span style="color:#000;font-weight:bold">=&gt;</span> <span style="color:#990073">NameError</span>: undefined <span style="color:#0086b3">method</span> <span style="color:#d14">`delegate`</span> <span style="color:#000;font-weight:bold">for</span> <span style="color:#000;font-weight:bold">class</span> <span style="color:#d14">`Module`</span>
-
-<span style="color:#008080">Forwardable</span><span style="color:#000;font-weight:bold">.</span>instance_method(<span style="color:#990073">:delegate</span>)<span style="color:#000;font-weight:bold">.</span>source_location
-<span style="color:#000;font-weight:bold">=&gt;</span> <span style="color:#000;font-weight:bold">[</span><span style="color:#d14">&#34;/home/bkutil/.rubies/ruby-2.1.0/lib/ruby/2.1.0/forwardable.rb&#34;</span>, <span style="color:#099">132</span><span style="color:#000;font-weight:bold">]</span></code></pre></div>
-<p>Second, native methods (those optimized in C for speed) will return <code>nil</code>,
-for example the <code>empty?</code> check of the <code>String</code> class:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#0086b3">String</span><span style="color:#000;font-weight:bold">.</span>new<span style="color:#000;font-weight:bold">.</span>method(<span style="color:#990073">:empty?</span>)<span style="color:#000;font-weight:bold">.</span>source_location
-<span style="color:#000;font-weight:bold">=&gt;</span> <span style="color:#000;font-weight:bold">nil</span></code></pre></div>
-<p>And finally, <code>eval</code>ed code (this also applies for other <code>*_eval</code>
+<code>method</code>, <code>instance_method</code> is needed to get the method object:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>require</span> <span style=color:#d20;background-color:#fff0f0>&#39;forwardable&#39;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#036;font-weight:700>Forwardable</span>.method(<span style=color:#a60;background-color:#fff0f0>:delegate</span>)
+</span></span><span style=display:flex><span>=&gt; <span style=color:#a60;background-color:#fff0f0>NameError</span>: undefined <span style=color:#038>method</span> <span style=color:#d20;background-color:#fff0f0>`delegate`</span> <span style=color:#080;font-weight:700>for</span> <span style=color:#080;font-weight:700>class</span> <span style=color:#d20;background-color:#fff0f0>`Module`</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#036;font-weight:700>Forwardable</span>.instance_method(<span style=color:#a60;background-color:#fff0f0>:delegate</span>).source_location
+</span></span><span style=display:flex><span>=&gt; [<span style=color:#d20;background-color:#fff0f0>&#34;/home/bkutil/.rubies/ruby-2.1.0/lib/ruby/2.1.0/forwardable.rb&#34;</span>, <span style=color:#00d;font-weight:700>132</span>]
+</span></span></code></pre></div><p>Second, native methods (those optimized in C for speed) will return <code>nil</code>,
+for example the <code>empty?</code> check of the <code>String</code> class:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>String</span>.new.method(<span style=color:#a60;background-color:#fff0f0>:empty?</span>).source_location
+</span></span><span style=display:flex><span>=&gt; <span style=color:#080>nil</span>
+</span></span></code></pre></div><p>And finally, <code>eval</code>ed code (this also applies for other <code>*_eval</code>
 methods you will encounter) won&rsquo;t have its source location defined properly,
-unless the file and line are <a href="http://www.ruby-doc.org/core-2.1.2/Kernel.html#method-i-eval">explicitly passed as a
-parameter</a>.</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#998;font-style:italic">#!/usr/bin/env ruby</span>
-
-<span style="color:#0086b3">eval</span>(<span style="color:#d14">&#34;class FooPrinter; def test; puts &#39;foo&#39;; end; end&#34;</span>)
-
-x <span style="color:#000;font-weight:bold">=</span> <span style="color:#008080">FooPrinter</span><span style="color:#000;font-weight:bold">.</span>new
-<span style="color:#0086b3">p</span> x<span style="color:#000;font-weight:bold">.</span>method(<span style="color:#990073">:test</span>)<span style="color:#000;font-weight:bold">.</span>source_location</code></pre></div>
-<p>without extra params outputs</p>
-
-<pre><code>[&quot;(eval)&quot;, 1]
-</code></pre>
-
-<p>A simple grep for <code>eval</code>, <code>class_eval</code> or <code>instance_eval</code> might
-help in this case.</p>
-
-<h2 id="a-name-conclusion-a-conclusion"><a name="conclusion"></a> Conclusion</h2>
-
-<p>These are just a couple of tricks that I found useful while debugging.</p>
-
-<p>Most of these methods are incorporated into advanced REPLs like
-<a href="http://pryrepl.org/">pry</a>, which also integrates documentation and has a
+unless the file and line are <a href=http://www.ruby-doc.org/core-2.1.2/Kernel.html#method-i-eval>explicitly passed as a
+parameter</a>.</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#888>#!/usr/bin/env ruby</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#038>eval</span>(<span style=color:#d20;background-color:#fff0f0>&#34;class FooPrinter; def test; puts &#39;foo&#39;; end; end&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>x = <span style=color:#036;font-weight:700>FooPrinter</span>.new
+</span></span><span style=display:flex><span><span style=color:#038>p</span> x.method(<span style=color:#a60;background-color:#fff0f0>:test</span>).source_location
+</span></span></code></pre></div><p>without extra params outputs</p><pre tabindex=0><code>[&#34;(eval)&#34;, 1]
+</code></pre><p>A simple grep for <code>eval</code>, <code>class_eval</code> or <code>instance_eval</code> might
+help in this case.</p><h2 id=a-nameconclusiona-conclusion>Conclusion</h2><p>These are just a couple of tricks that I found useful while debugging.</p><p>Most of these methods are incorporated into advanced REPLs like
+<a href=http://pryrepl.org/>pry</a>, which also integrates documentation and has a
 shell-like syntax that is easy to grasp to non-rubyists. I really recommend
-taking a look at it as well.</p>
-
-<p>Found these tricks useful? Have your own? Or do you have a question?
-Send me an email (balazs at kutilovi dot cz) or <a href="https://twitter.com/balazs_kutil">a
+taking a look at it as well.</p><p>Found these tricks useful? Have your own? Or do you have a question?
+Send me an email (balazs at kutilovi dot cz) or <a href=https://twitter.com/balazs_kutil>a
 tweet</a> - I&rsquo;d love to hear what you
-think!</p>
-
-<p>P.S: Thanks to <a href="https://twitter.com/dmajda">@dmajda</a> and
-<a href="https://twitter.com/pepareidinger">@pepareidinger</a> for proofreading and
-their insightful comments.</p>
-    </article>
-    </main><footer>
-  
-  <nav>
-    
-
-    
-      <a class="basic-alignment" href="https://balazs.kutilovi.cz/posts/ruby-tracing-part-one-bpf/">Ruby tracing part one - BPF &raquo;</a>
-    
-  </nav>
-  
-</footer>
-</body>
-
-</html>
+think!</p><p>P.S: Thanks to <a href=https://twitter.com/dmajda>@dmajda</a> and
+<a href=https://twitter.com/pepareidinger>@pepareidinger</a> for proofreading and
+their insightful comments.</p></main><footer><nav><a href=https://balazs.kutilovi.cz/posts/ruby-tracing-part-one-bpf/>Ruby tracing part one - BPF &#187;</a></nav><div><a href=https://balazs.kutilovi.cz/index.xml title="Balázs' blog" target=_blank>RSS</a>
+<a href=https://twitter.com/balazs_kutil target=_blank>Twitter</a>
+<a href=https://linkedin.com/in/balazs-kutil target=_blank>Linkedin</a>
+<a href=https://github.com/bkutil target=_blank>GitHub</a></div></footer></body></html>

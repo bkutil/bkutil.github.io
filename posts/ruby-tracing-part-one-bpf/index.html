@@ -1,277 +1,127 @@
-<html>
-<base href="https://balazs.kutilovi.cz/">
-<link rel="canonical" href="https://balazs.kutilovi.cz/posts/ruby-tracing-part-one-bpf/">
-
-<meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="chrome=1">
-<meta name="HandheldFriendly" content="True">
-<meta name="MobileOptimized" content="320">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="referrer" content="no-referrer">
-
-<title>Ruby tracing part one - BPF</title>
-
-
-
-<style>
-body {
-  max-width: 620px;
-  padding: 2em;
-  font-size: 18px;
-  line-height: 1.5;
-  margin: 1.5em auto;
-}
-
-blockquote {
-  padding-left: 1.5em;
-  border-left: 3px #ddd solid;
-}
-
-nav {
-  margin: 0 0 1.5em 0;
-}
-
-footer {
-  margin: 1.5em 0 0 0;
-}
-
-p>code, pre, .highlight {
-  font-size: 16px;
-  border: 1px solid #f0f0f0;
-  padding: 0 0.5em;
-  overflow-y: scroll;
-}
-</style>
-
-<body><header>
-  <nav>
-    <a href="https://balazs.kutilovi.cz/" title="Home">Home</a>
-    
-    <a href="/posts/" title=""></a>
-    
-    <a href="/about/" title="">About</a>
-    
-    <a href="/weekly-notes/" title="">Weekly notes</a>
-    
-  <nav>
-</header>
-<main>
-    <article>
-      <h1> Ruby tracing part one - BPF </h1>
-
-      <p></p>
-
-<p>How many times did you need to ssh into production, and see what the Ruby app
+<!doctype html><html lang=en-us dir=ltr><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer"><title>Ruby tracing part one - BPF | Balázs' blog</title>
+<link rel=canonical href=https://balazs.kutilovi.cz/posts/ruby-tracing-part-one-bpf/><link href=https://balazs.kutilovi.cz/index.xml rel=alternate type=application/rss+xml title="Balázs' blog"><link rel="shortcut icon" type=image/svg+xml href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20fill=%22none%22%20viewBox=%220%200%2024%2024%22%20stroke-width=%221.5%22%20stroke=%22currentcolor%22%20color=%22grey%22%3E%3Cpath%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M10.34%2015.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5%204.5.0%20110-9h.75c.704.0%201.402-.03%202.09-.09m0%209.18c.253.962.584%201.892.985%202.783.247.55.06%201.21-.463%201.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845%2020.845.0%2001-1.44-4.282m3.102.069a18.03%2018.03.0%2001-.59-4.59c0-1.586.205-3.124.59-4.59m0%209.18a23.848%2023.848.0%20018.835%202.535M10.34%206.66a23.847%2023.847.0%20008.835-2.535m0%200A23.74%2023.74.0%200018.795%203m.38%201.125a23.91%2023.91.0%20011.014%205.395m-1.014%208.855c-.118.38-.245.754-.38%201.125m.38-1.125a23.91%2023.91.0%20001.014-5.395m0-3.46c.495.413.811%201.035.811%201.73s-.316%201.317-.811%201.73m0-3.46a24.347%2024.347.0%20010%203.46%22/%3E%3C/svg%3E"><style>/*!modern-normalize v2.0.0 | MIT License | https://github.com/sindresorhus/modern-normalize*/*,::before,::after{box-sizing:border-box}html{font-family:system-ui,segoe ui,Roboto,Helvetica,Arial,sans-serif,apple color emoji,segoe ui emoji;line-height:1.15;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4}body{margin:0}hr{height:0;color:inherit}abbr[title]{text-decoration:underline dotted}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:ui-monospace,SFMono-Regular,Consolas,liberation mono,Menlo,monospace;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit}button,input,optgroup,select,textarea{font-family:inherit;font-size:100%;line-height:1.15;margin:0}button,select{text-transform:none}button,[type=button],[type=reset],[type=submit]{-webkit-appearance:button}::-moz-focus-inner{border-style:none;padding:0}:-moz-focusring{outline:1px dotted ButtonText}:-moz-ui-invalid{box-shadow:none}legend{padding:0}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}</style><style>html{line-height:1.5}h1{font-size:2.136rem}h2{font-size:1.898rem}h3{font-size:1.688rem}body{max-width:32rem;padding:.74rem;margin:auto}blockquote{margin-left:1.688rem;padding-left:.74rem;border-left:.461rem #ddd solid}p code{font-size:.936rem;margin:0 .288rem}img{max-width:100%;height:auto}pre{font-size:.74rem;margin:1.688rem 0;padding:.936rem;overflow-x:scroll}footer{margin:1.688rem 0}footer nav{margin:1.688rem 0}</style></head><body><header><h1>Balázs' blog</h1><nav><span><a href=/>Posts</a>
+</span><span><a href=/about/>About</a></span></nav></header><main><h2>Ruby tracing part one - BPF</h2><time datetime=2017-01-28T17:16:15+01:00>January 28, 2017</time><p>How many times did you need to ssh into production, and see what the Ruby app
 is actually doing now? How it allocates memory, which syscalls or what
-user-level functions is it calling?</p>
-
-<p>Even with centralized logging, the granularity is less than ideal for observing
+user-level functions is it calling?</p><p>Even with centralized logging, the granularity is less than ideal for observing
 performance, or even bugs in the wild. What you usually get is an
 after-the-fact summary of state, maybe requests per second report, maybe an
 exception and a backtrace. And you don&rsquo;t run your Ruby apps on a MacOS server,
-do you? So DTrace is out of the question.</p>
-
-<p>Enter eBPF.</p>
-
-<p><a href="http://www.brendangregg.com/">Brendan Gregg</a> has been blogging about this
+do you? So DTrace is out of the question.</p><p>Enter eBPF.</p><p><a href=http://www.brendangregg.com/>Brendan Gregg</a> has been blogging about this
 persistently for a few years now, but I found it only last week (oops!) and it
 blew my mind. eBPF stands for extended Berkeley Packet Filter. It allows you to
 write tiny programs, that get checked for safety, compiled, and run by a small
 VM inside of the Linux kernel, whenever some kernel-, or even user-space event
-fires. Basically DTrace, but on Linux. Awesome!</p>
-
-<p>Let&rsquo;s take a look how to set up and compile MRI Ruby to be trace-able using
+fires. Basically DTrace, but on Linux. Awesome!</p><p>Let&rsquo;s take a look how to set up and compile MRI Ruby to be trace-able using
 <code>bcc</code> and <code>eBPF</code>. Then we&rsquo;ll go through some useful scripts from <code>bcc</code> toolbox,
 define our own probes in the Ruby VM and finally, talk about application level
-tracing.</p>
-
-<h2 id="setting-things-up">Setting things up</h2>
-
-<h3 id="kernel">Kernel</h3>
-
-<p>A pre-requisite is a fairly recent Linux kernel. eBPF is in mainline kernel
+tracing.</p><h2 id=setting-things-up>Setting things up</h2><h3 id=kernel>Kernel</h3><p>A pre-requisite is a fairly recent Linux kernel. eBPF is in mainline kernel
 since 4.1, so that, or newer one should do. I&rsquo;ll be using Debian unstable with
 experimental repository here, which includes Linux 4.9. A nice thing is that
 even Raspberry Pi is running version 4.4 kernel, which makes it a cool box for
-experimenting with eBPF.</p>
-
-<h3 id="ruby">Ruby</h3>
-
-<p>With the right kernel in place, <code>apt install</code> the <code>systemtap-sdt-dev</code> package:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ sudo apt install systemtap-sdt-dev</code></pre></div>
-<p>This will make <code>dtrace</code> command available. We can now compile MRI Ruby with
-<code>dtrace</code> support enabled. Using <a href="https://github.com/postmodern/ruby-install">ruby-install</a>:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ ruby-install ruby <span style="color:#099">2</span>.4 -- --enable-dtrace</code></pre></div>
-<p>If successful and with <code>ruby</code> in <code>$PATH</code>, this command should list the probes
-compiled into Ruby:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ readelf -n <span style="color:#000;font-weight:bold">$(</span>which ruby<span style="color:#000;font-weight:bold">)</span> | grep Name
-Name: raise
-Name: gc__mark__end
-Name: gc__mark__begin
-Name: gc__sweep__begin
-Name: gc__sweep__end
-<span style="color:#099">8</span>&lt; --- snip ---</code></pre></div>
-<p>Yay, so we now can see all probes that the MRI Ruby VM defines. Same steps
-should work with Rubinius as well.</p>
-
-<h3 id="bcc-tools">Bcc tools</h3>
-
-<p>To be actually able to write or use some programs that fire on these events, we need
-to install <a href="https://github.com/iovisor/bcc">BPF Compiler Collection (BCC)</a>.
-Rather than posting the instructions here, I&rsquo;ll just <a href="https://github.com/iovisor/bcc/blob/master/INSTALL.md#ubuntu---source">link to
+experimenting with eBPF.</p><h3 id=ruby>Ruby</h3><p>With the right kernel in place, <code>apt install</code> the <code>systemtap-sdt-dev</code> package:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-shell data-lang=shell><span style=display:flex><span>$ sudo apt install systemtap-sdt-dev
+</span></span></code></pre></div><p>This will make <code>dtrace</code> command available. We can now compile MRI Ruby with
+<code>dtrace</code> support enabled. Using <a href=https://github.com/postmodern/ruby-install>ruby-install</a>:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-shell data-lang=shell><span style=display:flex><span>$ ruby-install ruby 2.4 -- --enable-dtrace
+</span></span></code></pre></div><p>If successful and with <code>ruby</code> in <code>$PATH</code>, this command should list the probes
+compiled into Ruby:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-shell data-lang=shell><span style=display:flex><span>$ readelf -n <span style=color:#080;font-weight:700>$(</span>which ruby<span style=color:#080;font-weight:700>)</span> | grep Name
+</span></span><span style=display:flex><span>Name: raise
+</span></span><span style=display:flex><span>Name: gc__mark__end
+</span></span><span style=display:flex><span>Name: gc__mark__begin
+</span></span><span style=display:flex><span>Name: gc__sweep__begin
+</span></span><span style=display:flex><span>Name: gc__sweep__end
+</span></span><span style=display:flex><span>8&lt; --- snip ---
+</span></span></code></pre></div><p>Yay, so we now can see all probes that the MRI Ruby VM defines. Same steps
+should work with Rubinius as well.</p><h3 id=bcc-tools>Bcc tools</h3><p>To be actually able to write or use some programs that fire on these events, we need
+to install <a href=https://github.com/iovisor/bcc>BPF Compiler Collection (BCC)</a>.
+Rather than posting the instructions here, I&rsquo;ll just <a href=https://github.com/iovisor/bcc/blob/master/INSTALL.md#ubuntu---source>link to
 them</a> -
-while they are written for Ubuntu, they certainly work for Debian as well.</p>
-
-<p>The only gotcha I encountered on Debian unstable is <a href="https://github.com/iovisor/bcc/issues/782">an issue with gcc
-6.3</a> for which <a href="https://github.com/iovisor/bcc/issues/782#issuecomment-259075010">this
+while they are written for Ubuntu, they certainly work for Debian as well.</p><p>The only gotcha I encountered on Debian unstable is <a href=https://github.com/iovisor/bcc/issues/782>an issue with gcc
+6.3</a> for which <a href=https://github.com/iovisor/bcc/issues/782#issuecomment-259075010>this
 patch</a> needs
-to be applied, in order for the <code>bcc</code> toolchain to compile.</p>
-
-<p>With bcc installed in <code>/usr/</code>, and <code>/usr/share/bcc/tools/</code> in <code>PATH</code>, let&rsquo;s
-list the probes again:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ tplist -l <span style="color:#000;font-weight:bold">$(</span>which ruby<span style="color:#000;font-weight:bold">)</span>
-/opt/rubies/ruby-2.4.0/bin/ruby ruby:raise
-/opt/rubies/ruby-2.4.0/bin/ruby ruby:gc__mark__end
-<span style="color:#099">8</span>&lt; --- snip ---</code></pre></div>
-<p>Cool!</p>
-
-<h2 id="usage">Usage</h2>
-
-<p>Now, let&rsquo;s get to actual tracing. What about garbage collections?</p>
-
-<p>Let&rsquo;s start a tiny app and start tracing:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#998;font-style:italic">#!/usr/bin/env ruby</span>
-<span style="color:#0086b3">require</span> <span style="color:#d14">&#39;webrick&#39;</span>
-server <span style="color:#000;font-weight:bold">=</span> <span style="color:#008080">WEBrick</span><span style="color:#000;font-weight:bold">::</span><span style="color:#008080">HTTPServer</span><span style="color:#000;font-weight:bold">.</span>new(<span style="color:#990073">Port</span>: <span style="color:#099">8080</span>)
-server<span style="color:#000;font-weight:bold">.</span>mount_proc(<span style="color:#d14">&#39;/&#39;</span>) { <span style="color:#000;font-weight:bold">|</span>req, res<span style="color:#000;font-weight:bold">|</span> res<span style="color:#000;font-weight:bold">.</span>body <span style="color:#000;font-weight:bold">=</span> <span style="color:#d14">&#39;Hi!&#39;</span> }
-<span style="color:#0086b3">trap</span>(<span style="color:#d14">&#39;INT&#39;</span>) { server<span style="color:#000;font-weight:bold">.</span>shutdown }
-server<span style="color:#000;font-weight:bold">.</span>start</code></pre></div><div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"># trace -p <span style="color:#099">16305</span> <span style="color:#d14">&#39;u:ruby:gc__mark__begin&#39;</span></code></pre></div>
-<p>If we now run run <code>curl &quot;http://localhost:8080&quot;</code> and trigger some GC runs, <code>trace</code> will happily report them:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#998;font-style:italic"># trace -p 16305 &#39;u:ruby:gc__mark__begin&#39;
-</span><span style="color:#998;font-style:italic"></span>PID    TID    COMM         FUNC
-<span style="color:#099">16305</span>  <span style="color:#099">16333</span>  puma <span style="color:#099">001</span>     gc__mark__begin</code></pre></div>
-<p>Great, but tracing single events is not that useful. And, as of today, writing
+to be applied, in order for the <code>bcc</code> toolchain to compile.</p><p>With bcc installed in <code>/usr/</code>, and <code>/usr/share/bcc/tools/</code> in <code>PATH</code>, let&rsquo;s
+list the probes again:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-shell data-lang=shell><span style=display:flex><span>$ tplist -l <span style=color:#080;font-weight:700>$(</span>which ruby<span style=color:#080;font-weight:700>)</span>
+</span></span><span style=display:flex><span>/opt/rubies/ruby-2.4.0/bin/ruby ruby:raise
+</span></span><span style=display:flex><span>/opt/rubies/ruby-2.4.0/bin/ruby ruby:gc__mark__end
+</span></span><span style=display:flex><span>8&lt; --- snip ---
+</span></span></code></pre></div><p>Cool!</p><h2 id=usage>Usage</h2><p>Now, let&rsquo;s get to actual tracing. What about garbage collections?</p><p>Let&rsquo;s start a tiny app and start tracing:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#888>#!/usr/bin/env ruby</span>
+</span></span><span style=display:flex><span><span style=color:#038>require</span> <span style=color:#d20;background-color:#fff0f0>&#39;webrick&#39;</span>
+</span></span><span style=display:flex><span>server = <span style=color:#036;font-weight:700>WEBrick</span>::<span style=color:#036;font-weight:700>HTTPServer</span>.new(<span style=color:#a60;background-color:#fff0f0>Port</span>: <span style=color:#00d;font-weight:700>8080</span>)
+</span></span><span style=display:flex><span>server.mount_proc(<span style=color:#d20;background-color:#fff0f0>&#39;/&#39;</span>) { |req, res| res.body = <span style=color:#d20;background-color:#fff0f0>&#39;Hi!&#39;</span> }
+</span></span><span style=display:flex><span><span style=color:#038>trap</span>(<span style=color:#d20;background-color:#fff0f0>&#39;INT&#39;</span>) { server.shutdown }
+</span></span><span style=display:flex><span>server.start
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-shell data-lang=shell><span style=display:flex><span><span style=color:#888># trace -p 16305 &#39;u:ruby:gc__mark__begin&#39;</span>
+</span></span></code></pre></div><p>If we now run run <code>curl "http://localhost:8080"</code> and trigger some GC runs, <code>trace</code> will happily report them:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-shell data-lang=shell><span style=display:flex><span><span style=color:#888># trace -p 16305 &#39;u:ruby:gc__mark__begin&#39;</span>
+</span></span><span style=display:flex><span>PID    TID    COMM         FUNC
+</span></span><span style=display:flex><span><span style=color:#00d;font-weight:700>16305</span>  <span style=color:#00d;font-weight:700>16333</span>  puma <span style=color:#00d;font-weight:700>001</span>     gc__mark__begin
+</span></span></code></pre></div><p>Great, but tracing single events is not that useful. And, as of today, writing
 our own bcc programs is not for the faint of heart. Luckily, others already
-<a href="https://github.com/iovisor/bcc/pull/774/files">chimed in with their scripts</a>,
+<a href=https://github.com/iovisor/bcc/pull/774/files>chimed in with their scripts</a>,
 so there is a couple of tools that can trace not only GC, but also object
-allocations, calls or method flow:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ ucalls -l ruby <span style="color:#000;font-weight:bold">$(</span>pgrep ruby<span style="color:#000;font-weight:bold">)</span> <span style="color:#099">1</span>
-$ uflow ruby <span style="color:#000;font-weight:bold">$(</span>pgrep ruby<span style="color:#000;font-weight:bold">)</span>
-$ uobjnew ruby <span style="color:#000;font-weight:bold">$(</span>pgrep ruby<span style="color:#000;font-weight:bold">)</span>
-$ ugc ruby <span style="color:#000;font-weight:bold">$(</span>pgrep ruby<span style="color:#000;font-weight:bold">)</span></code></pre></div>
-<p>You can about these in the <a href="https://github.com/iovisor/bcc/pull/774#issue-184213300">merge
+allocations, calls or method flow:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-shell data-lang=shell><span style=display:flex><span>$ ucalls -l ruby <span style=color:#080;font-weight:700>$(</span>pgrep ruby<span style=color:#080;font-weight:700>)</span> <span style=color:#00d;font-weight:700>1</span>
+</span></span><span style=display:flex><span>$ uflow ruby <span style=color:#080;font-weight:700>$(</span>pgrep ruby<span style=color:#080;font-weight:700>)</span>
+</span></span><span style=display:flex><span>$ uobjnew ruby <span style=color:#080;font-weight:700>$(</span>pgrep ruby<span style=color:#080;font-weight:700>)</span>
+</span></span><span style=display:flex><span>$ ugc ruby <span style=color:#080;font-weight:700>$(</span>pgrep ruby<span style=color:#080;font-weight:700>)</span>
+</span></span></code></pre></div><p>You can about these in the <a href=https://github.com/iovisor/bcc/pull/774#issue-184213300>merge
 request</a> which adds
-them to the <code>bcc</code> toolchain.</p>
-
-<h2 id="creating-our-own-probes">Creating our own probes</h2>
-
-<h3 id="ruby-vm-probes">Ruby VM probes</h3>
-
-<p>With the tracing capabilities at hand, a question immediately comes to mind:</p>
-
-<p>Can we introduce our own probes to Ruby VM? And the answer is yes! Plus, it&rsquo;s not
-complicated. Suppose we want to trace whenever a <code>RegExp</code> is matched.</p>
-
-<p>Grep-ing the Ruby sources for &lsquo;dtrace&rsquo; leads us to <code>dtrace_probes.rdoc</code>, that lists the
-<a href="https://github.com/ruby/ruby/blob/8252ef0ad3457b5bd68fa16c40d7015a6728743c/doc/dtrace_probes.rdoc">exported probes</a>,
-<code>RUBY_DTRACE_HOOK</code> in <a href="https://github.com/ruby/ruby/blob/54fa9f9e1378aa7ef925f86ae776f3d6843eeab3/internal.h#L1735">internal.h</a>
-and a <a href="https://github.com/ruby/ruby/blob/54fa9f9e1378aa7ef925f86ae776f3d6843eeab3/probes.d">probes.d</a> file, listing probe definitions.</p>
-
-<p>So if we piece these bits of info together, we should:</p>
-
-<ol>
-<li><p>Add a probe definition to <code>probes.d</code>:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">probe <span style="color:#900;font-weight:bold">regexp__match</span>(<span style="color:#000;font-weight:bold">const</span> <span style="color:#458;font-weight:bold">char</span> <span style="color:#000;font-weight:bold">*</span>regexp_string, <span style="color:#000;font-weight:bold">const</span> <span style="color:#458;font-weight:bold">char</span> <span style="color:#000;font-weight:bold">*</span>filename, <span style="color:#458;font-weight:bold">int</span> lineno);</code></pre></div></li>
-
-<li><p>Add a <code>RUBY_DTRACE_HOOK(NAME, arg)</code> hook to the appropriate place in <code>re.c</code> from ruby 2.4.0 (for brevity, this covers only the <code>string =~ regexp</code> case):</p></li>
-</ol>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-patch" data-lang="patch"><span style="color:#999">diff --git a/re.c b/re.c
-</span><span style="color:#999">index e94b6a5..b6783ad 100644
-</span><span style="color:#999"></span><span style="color:#000;background-color:#fdd">--- a/re.c
-</span><span style="color:#000;background-color:#fdd"></span><span style="color:#000;background-color:#dfd">+++ b/re.c
-</span><span style="color:#000;background-color:#dfd"></span><span style="color:#aaa">@@ -10,6 +10,7 @@
-</span><span style="color:#aaa"></span> **********************************************************************/
-
- #include &#34;internal.h&#34;
-<span style="color:#000;background-color:#dfd">+#include &#34;probes.h&#34;
-</span><span style="color:#000;background-color:#dfd"></span> #include &#34;ruby/re.h&#34;
- #include &#34;ruby/util.h&#34;
- #include &#34;regint.h&#34;
-<span style="color:#aaa">@@ -3076,6 +3078,7 @@ rb_reg_match(VALUE re, VALUE str)
-</span><span style="color:#aaa"></span>     long pos = reg_match_pos(re, &amp;str, 0);
-     if (pos &lt; 0) return Qnil;
-     pos = rb_str_sublen(str, pos);
-<span style="color:#000;background-color:#dfd">+		 RUBY_DTRACE_HOOK(REGEXP_MATCH, RREGEXP_SRC(re));
-</span><span style="color:#000;background-color:#dfd"></span>     return LONG2FIX(pos);
- }
-</code></pre></div>
-<p>When we now re-compile Ruby, we should see the probe in the list:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#998;font-style:italic"># tplist -l ./build/bin/ruby | grep regexp
-</span><span style="color:#998;font-style:italic"></span>./build/bin/ruby ruby:regexp__match</code></pre></div>
-<p>We will use a trivial loop that matches a regexp:</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#998;font-style:italic">#!./build/bin/ruby</span>
-<span style="color:#0086b3">puts</span> <span style="color:#008080">Process</span><span style="color:#000;font-weight:bold">.</span>pid
-<span style="color:#000;font-weight:bold">while</span> <span style="color:#000;font-weight:bold">true</span>
-  r <span style="color:#000;font-weight:bold">=</span> <span style="color:#009926">/test/</span>
-  s <span style="color:#000;font-weight:bold">=</span> <span style="color:#d14">&#34;and now for some testing&#34;</span>
-  s <span style="color:#000;font-weight:bold">=~</span> r
-  <span style="color:#0086b3">sleep</span> <span style="color:#099">1</span>
-<span style="color:#000;font-weight:bold">end</span></code></pre></div>
-<p>Ensuring <code>PATH</code> and <code>RUBY_ROOT</code> point to the ruby tree (running <code>chruby .</code> in the source tree should do the trick):</p>
-<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#998;font-style:italic"># trace -p 960 &#39;u:ruby:regexp__match&#39;
-</span><span style="color:#998;font-style:italic"></span>PID    TID    COMM         FUNC
-<span style="color:#099">960</span>    <span style="color:#099">960</span>    test.rb      regexp__match
-<span style="color:#099">960</span>    <span style="color:#099">960</span>    test.rb      regexp__match</code></pre></div>
-<p>Et voila! We have a trace! If you change the <code>s</code> to not match <code>r</code>, no probe will fire.</p>
-
-<h3 id="application-level-tracing">Application level tracing</h3>
-
-<p>OK, so, &ldquo;That&rsquo;s pretty neat, but do I have to patch ruby VM every time I want
-to trace something?. I want to add probes to my app directly.&ldquo;&hellip;</p>
-
-<p>It turns out that&rsquo;s not that simple. As far as I know, and I&rsquo;d love to be
+them to the <code>bcc</code> toolchain.</p><h2 id=creating-our-own-probes>Creating our own probes</h2><h3 id=ruby-vm-probes>Ruby VM probes</h3><p>With the tracing capabilities at hand, a question immediately comes to mind:</p><p>Can we introduce our own probes to Ruby VM? And the answer is yes! Plus, it&rsquo;s not
+complicated. Suppose we want to trace whenever a <code>RegExp</code> is matched.</p><p>Grep-ing the Ruby sources for &lsquo;dtrace&rsquo; leads us to <code>dtrace_probes.rdoc</code>, that lists the
+<a href=https://github.com/ruby/ruby/blob/8252ef0ad3457b5bd68fa16c40d7015a6728743c/doc/dtrace_probes.rdoc>exported probes</a>,
+<code>RUBY_DTRACE_HOOK</code> in <a href=https://github.com/ruby/ruby/blob/54fa9f9e1378aa7ef925f86ae776f3d6843eeab3/internal.h#L1735>internal.h</a>
+and a <a href=https://github.com/ruby/ruby/blob/54fa9f9e1378aa7ef925f86ae776f3d6843eeab3/probes.d>probes.d</a> file, listing probe definitions.</p><p>So if we piece these bits of info together, we should:</p><ol><li><p>Add a probe definition to <code>probes.d</code>:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-c data-lang=c><span style=display:flex><span>probe <span style=color:#06b;font-weight:700>regexp__match</span>(<span style=color:#080;font-weight:700>const</span> <span style=color:#888;font-weight:700>char</span> *regexp_string, <span style=color:#080;font-weight:700>const</span> <span style=color:#888;font-weight:700>char</span> *filename, <span style=color:#888;font-weight:700>int</span> lineno);
+</span></span></code></pre></div></li><li><p>Add a <code>RUBY_DTRACE_HOOK(NAME, arg)</code> hook to the appropriate place in <code>re.c</code> from ruby 2.4.0 (for brevity, this covers only the <code>string =~ regexp</code> case):</p></li></ol><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-patch data-lang=patch><span style=display:flex><span><span style=color:#333>diff --git a/re.c b/re.c
+</span></span></span><span style=display:flex><span><span style=color:#333>index e94b6a5..b6783ad 100644
+</span></span></span><span style=display:flex><span><span style=color:#333></span><span style=color:#000;background-color:#fdd>--- a/re.c
+</span></span></span><span style=display:flex><span><span style=color:#000;background-color:#fdd></span><span style=color:#000;background-color:#dfd>+++ b/re.c
+</span></span></span><span style=display:flex><span><span style=color:#000;background-color:#dfd></span><span style=color:#666>@@ -10,6 +10,7 @@
+</span></span></span><span style=display:flex><span><span style=color:#666></span> **********************************************************************/
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span> #include &#34;internal.h&#34;
+</span></span><span style=display:flex><span><span style=color:#000;background-color:#dfd>+#include &#34;probes.h&#34;
+</span></span></span><span style=display:flex><span><span style=color:#000;background-color:#dfd></span> #include &#34;ruby/re.h&#34;
+</span></span><span style=display:flex><span> #include &#34;ruby/util.h&#34;
+</span></span><span style=display:flex><span> #include &#34;regint.h&#34;
+</span></span><span style=display:flex><span><span style=color:#666>@@ -3076,6 +3078,7 @@ rb_reg_match(VALUE re, VALUE str)
+</span></span></span><span style=display:flex><span><span style=color:#666></span>     long pos = reg_match_pos(re, &amp;str, 0);
+</span></span><span style=display:flex><span>     if (pos &lt; 0) return Qnil;
+</span></span><span style=display:flex><span>     pos = rb_str_sublen(str, pos);
+</span></span><span style=display:flex><span><span style=color:#000;background-color:#dfd>+		 RUBY_DTRACE_HOOK(REGEXP_MATCH, RREGEXP_SRC(re));
+</span></span></span><span style=display:flex><span><span style=color:#000;background-color:#dfd></span>     return LONG2FIX(pos);
+</span></span><span style=display:flex><span> }
+</span></span></code></pre></div><p>When we now re-compile Ruby, we should see the probe in the list:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-shell data-lang=shell><span style=display:flex><span><span style=color:#888># tplist -l ./build/bin/ruby | grep regexp</span>
+</span></span><span style=display:flex><span>./build/bin/ruby ruby:regexp__match
+</span></span></code></pre></div><p>We will use a trivial loop that matches a regexp:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#888>#!./build/bin/ruby</span>
+</span></span><span style=display:flex><span><span style=color:#038>puts</span> <span style=color:#036;font-weight:700>Process</span>.pid
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>while</span> <span style=color:#080>true</span>
+</span></span><span style=display:flex><span>  r = <span style=color:#080;background-color:#fff0ff>/test/</span>
+</span></span><span style=display:flex><span>  s = <span style=color:#d20;background-color:#fff0f0>&#34;and now for some testing&#34;</span>
+</span></span><span style=display:flex><span>  s =~ r
+</span></span><span style=display:flex><span>  <span style=color:#038>sleep</span> <span style=color:#00d;font-weight:700>1</span>
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>end</span>
+</span></span></code></pre></div><p>Ensuring <code>PATH</code> and <code>RUBY_ROOT</code> point to the ruby tree (running <code>chruby .</code> in the source tree should do the trick):</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-shell data-lang=shell><span style=display:flex><span><span style=color:#888># trace -p 960 &#39;u:ruby:regexp__match&#39;</span>
+</span></span><span style=display:flex><span>PID    TID    COMM         FUNC
+</span></span><span style=display:flex><span><span style=color:#00d;font-weight:700>960</span>    <span style=color:#00d;font-weight:700>960</span>    test.rb      regexp__match
+</span></span><span style=display:flex><span><span style=color:#00d;font-weight:700>960</span>    <span style=color:#00d;font-weight:700>960</span>    test.rb      regexp__match
+</span></span></code></pre></div><p>Et voila! We have a trace! If you change the <code>s</code> to not match <code>r</code>, no probe will fire.</p><h3 id=application-level-tracing>Application level tracing</h3><p>OK, so, &ldquo;That&rsquo;s pretty neat, but do I have to patch ruby VM every time I want
+to trace something?. I want to add probes to my app directly.&rdquo;&mldr;</p><p>It turns out that&rsquo;s not that simple. As far as I know, and I&rsquo;d love to be
 wrong - please do correct me! - the only way how to add application level probes
-is via <a href="https://github.com/chrisa/libusdt">libusdt</a> and
-<a href="https://github.com/kevinykchan/ruby-usdt">ruby-usdt</a>, which, at the moment
+is via <a href=https://github.com/chrisa/libusdt>libusdt</a> and
+<a href=https://github.com/kevinykchan/ruby-usdt>ruby-usdt</a>, which, at the moment
 works with DTrace only :( I don&rsquo;t know enough of the BPF internals
 (yet!), but maybe it should be possible to adapt the library to work
 with bcc&rsquo;s usdt interface, making the <code>ruby-usdt</code> gem work out of the
-box!</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>So that&rsquo;s it. It&rsquo;s awesome to see Linux offering such advanced tracing
+box!</p><h2 id=conclusion>Conclusion</h2><p>So that&rsquo;s it. It&rsquo;s awesome to see Linux offering such advanced tracing
 capabilities. This in turn makes our apps more transparent at runtime and eases
-debugging in production.</p>
-
-<p>Bcc is a really powerful toolkit for BPF-based tracing, and there are also
-tools like <a href="https://github.com/wkz/ply">ply</a>, making writing BPF
+debugging in production.</p><p>Bcc is a really powerful toolkit for BPF-based tracing, and there are also
+tools like <a href=https://github.com/wkz/ply>ply</a>, making writing BPF
 programs (for kernel probes) a breeze by compiling into them from a
 higher-level scripting language. This brings the whole tracing system
-even closer to non-C developers and operations engineers. Yay!</p>
-
-<p>In the next post, we&rsquo;ll look at <code>rbtrace</code> gem, which works as an extension to
+even closer to non-C developers and operations engineers. Yay!</p><p>In the next post, we&rsquo;ll look at <code>rbtrace</code> gem, which works as an extension to
 MRI Ruby, so it is bound to a concrete Ruby implementation, but can run on any
-operating system.</p>
-
-<p>If you&rsquo;re solving Ruby performance issues in prod, have experience with
-DTracing Ruby or just would like to chat about Ruby &amp; perf, shoot me a
-mail to (balazs at kutilovi dot cz), or a <a href="https://twitter.com/balazs_kutil">tweet</a>!
-I&rsquo;ll be happy to hear from you or help you out.</p>
-    </article>
-    </main><footer>
-  
-  <nav>
-    
-      <a class="basic-alignment" href="https://balazs.kutilovi.cz/posts/printf-debugging-basics-in-ruby/">&laquo; Printf debugging basics in Ruby</a>
-    
-
-    
-      <a class="basic-alignment" href="https://balazs.kutilovi.cz/posts/ruby-tracing-part-two-rbtrace/">Ruby tracing part two - rbtrace &raquo;</a>
-    
-  </nav>
-  
-</footer>
-</body>
-
-</html>
+operating system.</p><p>If you&rsquo;re solving Ruby performance issues in prod, have experience with
+DTracing Ruby or just would like to chat about Ruby & perf, shoot me a
+mail to (balazs at kutilovi dot cz), or a <a href=https://twitter.com/balazs_kutil>tweet</a>!
+I&rsquo;ll be happy to hear from you or help you out.</p></main><footer><nav><a href=https://balazs.kutilovi.cz/posts/printf-debugging-basics-in-ruby/>&#171; Printf debugging basics in Ruby</a>
+—
+<a href=https://balazs.kutilovi.cz/posts/ruby-tracing-part-two-rbtrace/>Ruby tracing part two - rbtrace &#187;</a></nav><div><a href=https://balazs.kutilovi.cz/index.xml title="Balázs' blog" target=_blank>RSS</a>
+<a href=https://twitter.com/balazs_kutil target=_blank>Twitter</a>
+<a href=https://linkedin.com/in/balazs-kutil target=_blank>Linkedin</a>
+<a href=https://github.com/bkutil target=_blank>GitHub</a></div></footer></body></html>

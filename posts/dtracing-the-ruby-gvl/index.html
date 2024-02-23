@@ -1,166 +1,50 @@
-<html>
-<base href="https://balazs.kutilovi.cz/">
-<link rel="canonical" href="https://balazs.kutilovi.cz/posts/dtracing-the-ruby-gvl/">
-
-<meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="chrome=1">
-<meta name="HandheldFriendly" content="True">
-<meta name="MobileOptimized" content="320">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="referrer" content="no-referrer">
-
-<title>dtracing the Ruby GVL</title>
-
-
-
-<style>
-body {
-  max-width: 620px;
-  padding: 2em;
-  font-size: 18px;
-  line-height: 1.5;
-  margin: 1.5em auto;
-}
-
-blockquote {
-  padding-left: 1.5em;
-  border-left: 3px #ddd solid;
-}
-
-nav {
-  margin: 0 0 1.5em 0;
-}
-
-footer {
-  margin: 1.5em 0 0 0;
-}
-
-p>code, pre, .highlight {
-  font-size: 16px;
-  border: 1px solid #f0f0f0;
-  padding: 0 0.5em;
-  overflow-y: scroll;
-}
-</style>
-
-<body><header>
-  <nav>
-    <a href="https://balazs.kutilovi.cz/" title="Home">Home</a>
-    
-    <a href="/posts/" title=""></a>
-    
-    <a href="/about/" title="">About</a>
-    
-    <a href="/weekly-notes/" title="">Weekly notes</a>
-    
-  <nav>
-</header>
-<main>
-    <article>
-      <h1> dtracing the Ruby GVL </h1>
-
-      <p></p>
-
-<p>Nate Berkopec posted an interesting question on
-<a href="https://twitter.com/nateberkopec/status/1124056388504838144">twitter</a>:</p>
-
-<blockquote>
-<p>Puma office hours: we want to measure what % of the time the global VM
+<!doctype html><html lang=en-us dir=ltr><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer"><title>DTracing the Ruby GVL | Balázs' blog</title>
+<link rel=canonical href=https://balazs.kutilovi.cz/posts/dtracing-the-ruby-gvl/><link href=https://balazs.kutilovi.cz/index.xml rel=alternate type=application/rss+xml title="Balázs' blog"><link rel="shortcut icon" type=image/svg+xml href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20fill=%22none%22%20viewBox=%220%200%2024%2024%22%20stroke-width=%221.5%22%20stroke=%22currentcolor%22%20color=%22grey%22%3E%3Cpath%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M10.34%2015.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5%204.5.0%20110-9h.75c.704.0%201.402-.03%202.09-.09m0%209.18c.253.962.584%201.892.985%202.783.247.55.06%201.21-.463%201.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845%2020.845.0%2001-1.44-4.282m3.102.069a18.03%2018.03.0%2001-.59-4.59c0-1.586.205-3.124.59-4.59m0%209.18a23.848%2023.848.0%20018.835%202.535M10.34%206.66a23.847%2023.847.0%20008.835-2.535m0%200A23.74%2023.74.0%200018.795%203m.38%201.125a23.91%2023.91.0%20011.014%205.395m-1.014%208.855c-.118.38-.245.754-.38%201.125m.38-1.125a23.91%2023.91.0%20001.014-5.395m0-3.46c.495.413.811%201.035.811%201.73s-.316%201.317-.811%201.73m0-3.46a24.347%2024.347.0%20010%203.46%22/%3E%3C/svg%3E"><style>/*!modern-normalize v2.0.0 | MIT License | https://github.com/sindresorhus/modern-normalize*/*,::before,::after{box-sizing:border-box}html{font-family:system-ui,segoe ui,Roboto,Helvetica,Arial,sans-serif,apple color emoji,segoe ui emoji;line-height:1.15;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4}body{margin:0}hr{height:0;color:inherit}abbr[title]{text-decoration:underline dotted}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:ui-monospace,SFMono-Regular,Consolas,liberation mono,Menlo,monospace;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit}button,input,optgroup,select,textarea{font-family:inherit;font-size:100%;line-height:1.15;margin:0}button,select{text-transform:none}button,[type=button],[type=reset],[type=submit]{-webkit-appearance:button}::-moz-focus-inner{border-style:none;padding:0}:-moz-focusring{outline:1px dotted ButtonText}:-moz-ui-invalid{box-shadow:none}legend{padding:0}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}</style><style>html{line-height:1.5}h1{font-size:2.136rem}h2{font-size:1.898rem}h3{font-size:1.688rem}body{max-width:32rem;padding:.74rem;margin:auto}blockquote{margin-left:1.688rem;padding-left:.74rem;border-left:.461rem #ddd solid}p code{font-size:.936rem;margin:0 .288rem}img{max-width:100%;height:auto}pre{font-size:.74rem;margin:1.688rem 0;padding:.936rem;overflow-x:scroll}footer{margin:1.688rem 0}footer nav{margin:1.688rem 0}</style></head><body><header><h1>Balázs' blog</h1><nav><span><a href=/>Posts</a>
+</span><span><a href=/about/>About</a></span></nav></header><main><h2>DTracing the Ruby GVL</h2><time datetime=2019-05-07T20:12:36+00:00>May 7, 2019</time><p>Nate Berkopec posted an interesting question on
+<a href=https://twitter.com/nateberkopec/status/1124056388504838144>twitter</a>:</p><blockquote><p>Puma office hours: we want to measure what % of the time the global VM
 lock is held in a Ruby process. anyone got an idea on how to even
-start to observe that, performantly? #railsconf</p>
-</blockquote>
-
-<p>I thought about using &lsquo;dtrace&rsquo; immediately, since I already experimented with adding
-custom probes to MRI Ruby a few years <a href="/posts/ruby-tracing-part-two-rbtrace/">back</a>.</p>
-
-<p>With that I set out to patch MRI to allow for this. And it worked -
-Ruby with the <a href="/gvl-tracing.patch">patch</a> can be installed using</p>
-
-<pre><code>ruby-install ruby-2.6.3 --patch https://balazs.kutilovi.cz/gvl-tracing.patch
-</code></pre>
-
-<p>The patch consists of:</p>
-
-<ol>
-<li>Adding the probe definitions and the hooks.</li>
-<li>Changing the VM struct to include a &lsquo;waiting&rsquo; counter. While Ruby 2.5 used a counter to track threads waiting for the GVL,
-the later versions switched to a linked list. So I re-introduced the counter to avoid walking the list every time.</li>
-</ol>
-
-<p>With these changes applied, I could get to tracing.</p>
-
-<p>The traced program was Puma (<code>Version 3.12.1 (ruby 2.6.3-p62)</code>, running a <code>config.ru</code> that consisted of:</p>
-
-<pre><code>puts Process.pid
-run -&gt;(env) { [200, {&quot;Content-Type&quot; =&gt; &quot;text/html&quot;}, [&quot;Hello World!&quot;]] }
-</code></pre>
-
-<p>Puma in the default settings (for <code>puma config.ru</code>), ran in the development environment and with 0
-min and 16 max threads. The workload was generated using <a href="https://github.com/wg/wrk">wrk</a>:</p>
-
-<pre><code>wrk -c 20 -d 10 -t 10 --latency http://localhost:9292
-</code></pre>
-
-<p>And here are some results:</p>
-
-<p>Quantized/binned times (in microseconds) that the GVL was held:</p>
-
-<pre><code>➜  ~ sudo dtrace -p 95059 -s gvl.d
-dtrace: script 'gvl.d' matched 8 probes
-
- value  ------------- Distribution ------------- count
-     1 |                                         0
-     2 |                                         1
-     4 |@@                                       14102
-     8 |@@@@@@@@@@@@@@@                          123107
-    16 |@@@@@@@@@@@@@@@@@@                       146116
-    32 |@@@@@                                    40426
-    64 |                                         1996
-   128 |                                         258
-   256 |                                         47
-   512 |                                         118
-  1024 |                                         96
-  2048 |                                         11
-  4096 |                                         0
-</code></pre>
-
-<p>And a number of threads waiting to get the GVL:</p>
-
-<pre><code>➜  ~ sudo dtrace -p 95059 -n 'ruby::vm-gvl-acquire { @waits = quantize(arg0) }'
-
-dtrace: description 'ruby::vm-gvl-acquire ' matched 1 probe
-
- value  ------------- Distribution ------------- count
-    -1 |                                         0
-     0 |                                         497
-     1 |                                         87
-     2 |                                         341
-     4 |                                         1553
-     8 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 346829
-    16 |                                         0
-</code></pre>
-
-<p>So most of the time, 8-15 threads were waiting for the GVL - wrk was
+start to observe that, performantly? #railsconf</p></blockquote><p>I thought about using &lsquo;dtrace&rsquo; immediately, since I already experimented with adding
+custom probes to MRI Ruby a few years <a href=/posts/ruby-tracing-part-two-rbtrace/>back</a>.</p><p>With that I set out to patch MRI to allow for this. And it worked -
+Ruby with the <a href=./gvl-tracing.patch>patch</a> can be installed using</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>ruby-install ruby-2.6.3 --patch https://balazs.kutilovi.cz/gvl-tracing.patch
+</span></span></code></pre></div><p>The patch consists of:</p><ol><li>Adding the probe definitions and the hooks.</li><li>Changing the VM struct to include a &lsquo;waiting&rsquo; counter. While Ruby 2.5 used a counter to track threads waiting for the GVL,
+the later versions switched to a linked list. So I re-introduced the counter to avoid walking the list every time.</li></ol><p>With these changes applied, I could get to tracing.</p><p>The traced program was Puma (<code>Version 3.12.1 (ruby 2.6.3-p62)</code>, running a <code>config.ru</code> that consisted of:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>puts</span> <span style=color:#036;font-weight:700>Process</span>.pid
+</span></span><span style=display:flex><span>run -&gt;(env) { [<span style=color:#00d;font-weight:700>200</span>, {<span style=color:#d20;background-color:#fff0f0>&#34;Content-Type&#34;</span> =&gt; <span style=color:#d20;background-color:#fff0f0>&#34;text/html&#34;</span>}, [<span style=color:#d20;background-color:#fff0f0>&#34;Hello World!&#34;</span>]] }
+</span></span></code></pre></div><p>Puma in the default settings (for <code>puma config.ru</code>), ran in the development environment and with 0
+min and 16 max threads. The workload was generated using <a href=https://github.com/wg/wrk>wrk</a>:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>wrk -c <span style=color:#00d;font-weight:700>20</span> -d <span style=color:#00d;font-weight:700>10</span> -t <span style=color:#00d;font-weight:700>10</span> --latency http://localhost:9292
+</span></span></code></pre></div><p>And here are some results:</p><p>Quantized/binned times (in microseconds) that the GVL was held:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>➜  ~ sudo dtrace -p <span style=color:#00d;font-weight:700>95059</span> -s gvl.d
+</span></span><span style=display:flex><span>dtrace: script <span style=color:#d20;background-color:#fff0f0>&#39;gvl.d&#39;</span> matched <span style=color:#00d;font-weight:700>8</span> probes
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span> value  ------------- Distribution ------------- count
+</span></span><span style=display:flex><span>     <span style=color:#00d;font-weight:700>1</span> |                                         <span style=color:#00d;font-weight:700>0</span>
+</span></span><span style=display:flex><span>     <span style=color:#00d;font-weight:700>2</span> |                                         <span style=color:#00d;font-weight:700>1</span>
+</span></span><span style=display:flex><span>     <span style=color:#00d;font-weight:700>4</span> |@@                                       <span style=color:#00d;font-weight:700>14102</span>
+</span></span><span style=display:flex><span>     <span style=color:#00d;font-weight:700>8</span> |@@@@@@@@@@@@@@@                          <span style=color:#00d;font-weight:700>123107</span>
+</span></span><span style=display:flex><span>    <span style=color:#00d;font-weight:700>16</span> |@@@@@@@@@@@@@@@@@@                       <span style=color:#00d;font-weight:700>146116</span>
+</span></span><span style=display:flex><span>    <span style=color:#00d;font-weight:700>32</span> |@@@@@                                    <span style=color:#00d;font-weight:700>40426</span>
+</span></span><span style=display:flex><span>    <span style=color:#00d;font-weight:700>64</span> |                                         <span style=color:#00d;font-weight:700>1996</span>
+</span></span><span style=display:flex><span>   <span style=color:#00d;font-weight:700>128</span> |                                         <span style=color:#00d;font-weight:700>258</span>
+</span></span><span style=display:flex><span>   <span style=color:#00d;font-weight:700>256</span> |                                         <span style=color:#00d;font-weight:700>47</span>
+</span></span><span style=display:flex><span>   <span style=color:#00d;font-weight:700>512</span> |                                         <span style=color:#00d;font-weight:700>118</span>
+</span></span><span style=display:flex><span>  <span style=color:#00d;font-weight:700>1024</span> |                                         <span style=color:#00d;font-weight:700>96</span>
+</span></span><span style=display:flex><span>  <span style=color:#00d;font-weight:700>2048</span> |                                         <span style=color:#00d;font-weight:700>11</span>
+</span></span><span style=display:flex><span>  <span style=color:#00d;font-weight:700>4096</span> |                                         <span style=color:#00d;font-weight:700>0</span>
+</span></span></code></pre></div><p>And a number of threads waiting to get the GVL:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>➜  ~ sudo dtrace -p <span style=color:#00d;font-weight:700>95059</span> -n <span style=color:#d20;background-color:#fff0f0>&#39;ruby::vm-gvl-acquire { @waits = quantize(arg0) }&#39;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>dtrace: description <span style=color:#d20;background-color:#fff0f0>&#39;ruby::vm-gvl-acquire &#39;</span> matched <span style=color:#00d;font-weight:700>1</span> probe
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span> value  ------------- Distribution ------------- count
+</span></span><span style=display:flex><span>    -1 |                                         <span style=color:#00d;font-weight:700>0</span>
+</span></span><span style=display:flex><span>     <span style=color:#00d;font-weight:700>0</span> |                                         <span style=color:#00d;font-weight:700>497</span>
+</span></span><span style=display:flex><span>     <span style=color:#00d;font-weight:700>1</span> |                                         <span style=color:#00d;font-weight:700>87</span>
+</span></span><span style=display:flex><span>     <span style=color:#00d;font-weight:700>2</span> |                                         <span style=color:#00d;font-weight:700>341</span>
+</span></span><span style=display:flex><span>     <span style=color:#00d;font-weight:700>4</span> |                                         <span style=color:#00d;font-weight:700>1553</span>
+</span></span><span style=display:flex><span>     <span style=color:#00d;font-weight:700>8</span> |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ <span style=color:#00d;font-weight:700>346829</span>
+</span></span><span style=display:flex><span>    <span style=color:#00d;font-weight:700>16</span> |                                         <span style=color:#00d;font-weight:700>0</span>
+</span></span></code></pre></div><p>So most of the time, 8-15 threads were waiting for the GVL - wrk was
 saturating all threads and they had to wait for the lock. (quantize
-increments the value in the highest bucket &lt; arg0)</p>
-
-<p>It should be also possible to trace how long a particular thread spent
-in the GVL:</p>
-
-<pre><code>sudo dtrace -p 11864 -n 'ruby::vm-gvl-acquire { start[tid] = timestamp } ruby::vm-gvl-release { @total[tid] = sum((timestamp - start[tid])) }'
-</code></pre>
-    </article>
-    </main><footer>
-  
-  <nav>
-    
-      <a class="basic-alignment" href="https://balazs.kutilovi.cz/posts/notes-from-rubyconf-au-talks/">&laquo; Notes from RubyConf 2017 AU talks</a>
-    
-
-    
-  </nav>
-  
-</footer>
-</body>
-
-</html>
+increments the value in the highest bucket &lt; arg0)</p><p>It should be also possible to trace how long a particular thread spent
+in the GVL:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>sudo dtrace -p <span style=color:#00d;font-weight:700>11864</span> -n <span style=color:#d20;background-color:#fff0f0>&#39;ruby::vm-gvl-acquire { start[tid] = timestamp } ruby::vm-gvl-release { @total[tid] = sum((timestamp - start[tid])) }&#39;</span>
+</span></span></code></pre></div></main><footer><nav><a href=https://balazs.kutilovi.cz/posts/notes-from-rubyconf-au-talks/>&#171; Notes from RubyConf 2017 AU talks</a></nav><div><a href=https://balazs.kutilovi.cz/index.xml title="Balázs' blog" target=_blank>RSS</a>
+<a href=https://twitter.com/balazs_kutil target=_blank>Twitter</a>
+<a href=https://linkedin.com/in/balazs-kutil target=_blank>Linkedin</a>
+<a href=https://github.com/bkutil target=_blank>GitHub</a></div></footer></body></html>
