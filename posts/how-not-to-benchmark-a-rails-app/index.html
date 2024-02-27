@@ -1,0 +1,86 @@
+<!doctype html><html lang=en-us dir=ltr><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=referrer content="no-referrer"><title>How Not to Benchmark a Rails App | Balázs' blog</title>
+<link rel=canonical href=https://balazs.kutilovi.cz/posts/how-not-to-benchmark-a-rails-app/><link href=https://balazs.kutilovi.cz/index.xml rel=alternate type=application/rss+xml title="Balázs' blog"><link rel="shortcut icon" type=image/svg+xml href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20fill=%22none%22%20viewBox=%220%200%2024%2024%22%20stroke-width=%221.5%22%20stroke=%22currentcolor%22%20color=%22grey%22%3E%3Cpath%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M10.34%2015.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5%204.5.0%20110-9h.75c.704.0%201.402-.03%202.09-.09m0%209.18c.253.962.584%201.892.985%202.783.247.55.06%201.21-.463%201.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845%2020.845.0%2001-1.44-4.282m3.102.069a18.03%2018.03.0%2001-.59-4.59c0-1.586.205-3.124.59-4.59m0%209.18a23.848%2023.848.0%20018.835%202.535M10.34%206.66a23.847%2023.847.0%20008.835-2.535m0%200A23.74%2023.74.0%200018.795%203m.38%201.125a23.91%2023.91.0%20011.014%205.395m-1.014%208.855c-.118.38-.245.754-.38%201.125m.38-1.125a23.91%2023.91.0%20001.014-5.395m0-3.46c.495.413.811%201.035.811%201.73s-.316%201.317-.811%201.73m0-3.46a24.347%2024.347.0%20010%203.46%22/%3E%3C/svg%3E"><style>/*!modern-normalize v2.0.0 | MIT License | https://github.com/sindresorhus/modern-normalize*/*,::before,::after{box-sizing:border-box}html{font-family:system-ui,segoe ui,Roboto,Helvetica,Arial,sans-serif,apple color emoji,segoe ui emoji;line-height:1.15;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4}body{margin:0}hr{height:0;color:inherit}abbr[title]{text-decoration:underline dotted}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:ui-monospace,SFMono-Regular,Consolas,liberation mono,Menlo,monospace;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit}button,input,optgroup,select,textarea{font-family:inherit;font-size:100%;line-height:1.15;margin:0}button,select{text-transform:none}button,[type=button],[type=reset],[type=submit]{-webkit-appearance:button}::-moz-focus-inner{border-style:none;padding:0}:-moz-focusring{outline:1px dotted ButtonText}:-moz-ui-invalid{box-shadow:none}legend{padding:0}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}</style><style>html{line-height:1.5}h1{font-size:2.136rem}h2{font-size:1.898rem}h3{font-size:1.688rem}body{max-width:32rem;padding:.74rem;margin:auto}blockquote{margin-left:1.688rem;padding-left:.74rem;border-left:.461rem #ddd solid}p code{font-size:.936rem;margin:0 .288rem}img{max-width:100%;height:auto}pre{font-size:.74rem;margin:1.688rem 0;padding:.936rem;overflow-x:scroll}footer{margin:1.688rem 0}footer nav{margin:1.688rem 0}</style></head><body><header><h1>Balázs' blog</h1><nav><span><a href=/>Posts</a>
+</span><span><a href=/about/>About</a></span></nav></header><main><h2>How Not to Benchmark a Rails App</h2><time datetime=2024-02-27T07:04:30+01:00>February 27, 2024</time><p>It starts with &ldquo;I&rsquo;m just going to use <code>benchmark/ips</code> and <code>openuri</code>,
+its just a couple lines of code&rdquo;.</p><p>So you copy over <code>config/environments/production.rb</code> to
+<code>config/environments/benchmark.rb</code> to have the same settings, disable
+SSL, add a <a href=https://guides.rubyonrails.org/asset_pipeline.html#local-precompilation>prefix to assets
+path</a>
+to avoid interfering w/ development, add a DB configuration for the new
+env, run <code>RAILS_ENV=benchmark rails db:setup</code> and <code>RAILS_ENV=benchmark rails assets:precompile</code>.</p><p>Whip up a trivial rake task:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#038>require</span> <span style=color:#d20;background-color:#fff0f0>&#39;benchmark/ips&#39;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>namespace <span style=color:#a60;background-color:#fff0f0>:traffic</span> <span style=color:#080;font-weight:700>do</span>
+</span></span><span style=display:flex><span>  desc <span style=color:#d20;background-color:#fff0f0>&#34;Benchmark the app&#34;</span>
+</span></span><span style=display:flex><span>  task <span style=color:#a60;background-color:#fff0f0>:benchmark</span> <span style=color:#080;font-weight:700>do</span>
+</span></span><span style=display:flex><span>      <span style=color:#036;font-weight:700>Benchmark</span>.ips <span style=color:#080;font-weight:700>do</span> |x|
+</span></span><span style=display:flex><span>        x.report(<span style=color:#d20;background-color:#fff0f0>&#34;slow app is slow&#34;</span>) <span style=color:#080;font-weight:700>do</span>
+</span></span><span style=display:flex><span>          <span style=color:#036;font-weight:700>URI</span>.open(<span style=color:#d20;background-color:#fff0f0>&#34;http://localhost:3000/&#34;</span>)
+</span></span><span style=display:flex><span>        <span style=color:#080;font-weight:700>end</span>
+</span></span><span style=display:flex><span>      <span style=color:#080;font-weight:700>end</span>
+</span></span><span style=display:flex><span>  <span style=color:#080;font-weight:700>end</span>
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>end</span>
+</span></span></code></pre></div><p>Start the server:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#369>SECRET_KEY_BASE_DUMMY</span>=<span style=color:#00d;font-weight:700>1</span> <span style=color:#369>RAILS_ENV</span>=benchmark rails s
+</span></span></code></pre></div><p>and off you go:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>host@app:~/demo$ <span style=color:#369>RAILS_ENV</span>=benchmark rake traffic:benchmark
+</span></span><span style=display:flex><span>ruby 3.3.0 (2023-12-25 revision 5124f9ac75) [x86_64-linux]
+</span></span><span style=display:flex><span>Warming up --------------------------------------
+</span></span><span style=display:flex><span>    slow app is slow     1.000 i/100ms
+</span></span><span style=display:flex><span>Calculating -------------------------------------
+</span></span><span style=display:flex><span>    slow app is slow     18.749 (±16.0%) i/s -     91.000 in   5.041423s
+</span></span></code></pre></div><p>Hmm, how to compare this to a baseline? So you add support for
+benchmarking another endpoint, specifying alternative port, etc.
+Starting the alternative server could be automated, and <code>benchmark-ips</code>
+supports resuming a run from a different process, but meh, let&rsquo;s keep it
+manual for now:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>host@app:~/demo$ <span style=color:#369>COMPARE</span>=<span style=color:#00d;font-weight:700>1</span> <span style=color:#369>RAILS_ENV</span>=benchmark rake traffic:benchmark
+</span></span><span style=display:flex><span>ruby 3.3.0 (2023-12-25 revision 5124f9ac75) [x86_64-linux]
+</span></span><span style=display:flex><span>Warming up --------------------------------------
+</span></span><span style=display:flex><span>    slow app is slow     1.000 i/100ms
+</span></span><span style=display:flex><span> alternative is fast     1.000 i/100ms
+</span></span><span style=display:flex><span>Calculating -------------------------------------
+</span></span><span style=display:flex><span>    slow app is slow     19.279 (±15.6%) i/s -     94.000 in   5.009547s
+</span></span><span style=display:flex><span> alternative is fast     20.352 (± 9.8%) i/s -    101.000 in   5.021022s
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>Comparison:
+</span></span><span style=display:flex><span> alternative is fast:       20.4 i/s
+</span></span><span style=display:flex><span>    slow app is slow:       19.3 i/s - same-ish: difference falls within error
+</span></span></code></pre></div><p>Except that now you have two measurements, and these are just averages, but
+how does the latency distribution look like?</p><p>So you add <a href=https://github.com/zombocom/mini_histogram/>mini_histogram</a>,
+fiddle a bit around passing <code>benchmark/ips</code> report to it, and get a
+beautiful, ASCII, side by side comparison:</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#888># scroll this way for the other histogram =&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>[14.0, 15.0) ┤▇ <span style=color:#00d;font-weight:700>1</span>                                           [14.0, 15.0) ┤ <span style=color:#00d;font-weight:700>0</span>
+</span></span><span style=display:flex><span>[15.0, 16.0) ┤▇ <span style=color:#00d;font-weight:700>1</span>                                           [15.0, 16.0) ┤ <span style=color:#00d;font-weight:700>0</span>
+</span></span><span style=display:flex><span>[16.0, 17.0) ┤▇ <span style=color:#00d;font-weight:700>1</span>                                           [16.0, 17.0) ┤ <span style=color:#00d;font-weight:700>0</span>
+</span></span><span style=display:flex><span>[17.0, 18.0) ┤▇▇▇▇▇ <span style=color:#00d;font-weight:700>5</span>                                       [17.0, 18.0) ┤ <span style=color:#00d;font-weight:700>0</span>
+</span></span><span style=display:flex><span>[18.0, 19.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇ <span style=color:#00d;font-weight:700>13</span>                             [18.0, 19.0) ┤▇▇▇▇▇▇▇▇▇▇▇ <span style=color:#00d;font-weight:700>4</span>
+</span></span><span style=display:flex><span>[19.0, 20.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ <span style=color:#00d;font-weight:700>21</span>                     [19.0, 20.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ <span style=color:#00d;font-weight:700>13</span>
+</span></span><span style=display:flex><span>[20.0, 21.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ <span style=color:#00d;font-weight:700>34</span>       [20.0, 21.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ <span style=color:#00d;font-weight:700>12</span>
+</span></span><span style=display:flex><span>[21.0, 22.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ <span style=color:#00d;font-weight:700>20</span>                      [21.0, 22.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ <span style=color:#00d;font-weight:700>11</span>
+</span></span><span style=display:flex><span>[22.0, 23.0) ┤▇▇▇▇ <span style=color:#00d;font-weight:700>4</span>                                        [22.0, 23.0) ┤▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇ <span style=color:#00d;font-weight:700>11</span>
+</span></span><span style=display:flex><span>[23.0, 24.0) ┤ <span style=color:#00d;font-weight:700>0</span>                                            [23.0, 24.0) ┤▇▇▇ <span style=color:#00d;font-weight:700>1</span>
+</span></span><span style=display:flex><span>             └                                        ┘                  └                                        ┘
+</span></span><span style=display:flex><span>                             Frequency                                                   Frequency
+</span></span></code></pre></div><p>And now you wonder, <em>where</em> does the app get slow, so you add
+<a href=https://github.com/tmm1/stackprof>stackprof</a> as a middleware to the
+app&mldr;</p><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-ruby data-lang=ruby><span style=display:flex><span><span style=color:#888># config/application.rb</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>if</span> <span style=color:#036;font-weight:700>ENV</span>.fetch(<span style=color:#d20;background-color:#fff0f0>&#34;STACKPROF_ENABLED&#34;</span>, <span style=color:#d20;background-color:#fff0f0>&#34;0&#34;</span>) == <span style=color:#d20;background-color:#fff0f0>&#34;1&#34;</span>
+</span></span><span style=display:flex><span>  config.middleware.use <span style=color:#036;font-weight:700>StackProf</span>::<span style=color:#036;font-weight:700>Middleware</span>, <span style=color:#a60;background-color:#fff0f0>enabled</span>: <span style=color:#080>true</span>, <span style=color:#a60;background-color:#fff0f0>mode</span>: <span style=color:#a60;background-color:#fff0f0>:cpu</span>, <span style=color:#a60;background-color:#fff0f0>interval</span>: <span style=color:#00d;font-weight:700>1000</span>, <span style=color:#a60;background-color:#fff0f0>save_every</span>: <span style=color:#00d;font-weight:700>5</span>
+</span></span><span style=display:flex><span><span style=color:#080;font-weight:700>end</span>
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#fff;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>demo@app:~/demo$ stackprof tmp/stackprof-* --text --limit <span style=color:#369>5</span>
+</span></span><span style=display:flex><span>==================================
+</span></span><span style=display:flex><span>  Mode: cpu(1000)
+</span></span><span style=display:flex><span>  Samples: <span style=color:#00d;font-weight:700>286</span> (0.00% miss rate)
+</span></span><span style=display:flex><span>  GC: <span style=color:#00d;font-weight:700>6</span> (2.10%)
+</span></span><span style=display:flex><span>==================================
+</span></span><span style=display:flex><span>     TOTAL    (pct)     SAMPLES    (pct)     FRAME
+</span></span><span style=display:flex><span>        <span style=color:#00d;font-weight:700>35</span>  (12.2%)          <span style=color:#00d;font-weight:700>35</span>  (12.2%)     PG::Connection#exec_prepared
+</span></span><span style=display:flex><span>        <span style=color:#00d;font-weight:700>40</span>  (14.0%)           <span style=color:#00d;font-weight:700>7</span>   (2.4%)     Class#new
+</span></span><span style=display:flex><span>         <span style=color:#00d;font-weight:700>6</span>   (2.1%)           <span style=color:#00d;font-weight:700>6</span>   (2.1%)     (sweeping)
+</span></span><span style=display:flex><span>         <span style=color:#00d;font-weight:700>9</span>   (3.1%)           <span style=color:#00d;font-weight:700>6</span>   (2.1%)     Hash#fetch
+</span></span><span style=display:flex><span>         <span style=color:#00d;font-weight:700>9</span>   (3.1%)           <span style=color:#00d;font-weight:700>4</span>   (1.4%)     ActionView::Helpers::TagHelper::TagBuilder#content_tag_string
+</span></span></code></pre></div><p>And at that point, you think you should&rsquo;ve went with
+<a href=https://github.com/zombocom/derailed_benchmarks>derailed_benchmarks</a>
+from the start, because it does all of this, and a lot more.</p></main><footer><nav><a href=https://balazs.kutilovi.cz/posts/ruby-internal-types/>&#171; Ruby Internal Types</a></nav><div><a href=https://balazs.kutilovi.cz/index.xml title="Balázs' blog" target=_blank>RSS</a>
+<a href=https://twitter.com/balazs_kutil target=_blank>Twitter</a>
+<a href=https://linkedin.com/in/balazs-kutil target=_blank>Linkedin</a>
+<a href=https://github.com/bkutil target=_blank>GitHub</a></div></footer></body></html>
