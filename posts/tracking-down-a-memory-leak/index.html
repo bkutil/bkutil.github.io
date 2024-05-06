@@ -45,12 +45,11 @@ continued to follow the blog post, and obtained the address info</p><div class=h
 lines</a>, so in this case, I was
 using <code>lograge</code> to get a single line per request that can be easily parsed
 later on.</p><p>To be able to log Rails&rsquo; SQL queries this way, I also added a
-<a href=https://github.com/iMacTia/lograge-sql/>lograge-sql</a> gem.</p><p>Under the hood, this library is using an <a href=https://github.com/iMacTia/lograge-sql/blob/c8b11e97f2d827b81179b49b7f1dc8bb72b34999/lib/lograge/active_record_log_subscriber.rb#L47>ActiveRecord event
-subscriber</a> to capture SQL queries from the current request. These are stored in a <a href=https://github.com/iMacTia/lograge-sql/blob/c8b11e97f2d827b81179b49b7f1dc8bb72b34999/lib/lograge/sql.rb#L37>thread local
-buffer</a>,
-which then gets passed over to lograge
-through a hook into the <code>extract_request</code> method. In the usual case, e.g. while
-processing a request, this would emit the log line, but <a href=https://github.com/iMacTia/lograge-sql/blob/c8b11e97f2d827b81179b49b7f1dc8bb72b34999/lib/lograge/sql/extension.rb#L14-L27>also clear the
+<a href=https://github.com/iMacTia/lograge-sql/>lograge-sql</a> gem.</p><p>Under the hood, this library uses an <a href=https://github.com/iMacTia/lograge-sql/blob/c8b11e97f2d827b81179b49b7f1dc8bb72b34999/lib/lograge/active_record_log_subscriber.rb#L47>ActiveRecord event
+subscriber</a> to capture SQL queries into a <a href=https://github.com/iMacTia/lograge-sql/blob/c8b11e97f2d827b81179b49b7f1dc8bb72b34999/lib/lograge/sql.rb#L37>thread local
+buffer</a>.</p><p>In the usual case, e.g. while processing a request, the buffer would get
+passed over to <code>lograge</code> through a hook into the <code>extract_request</code>
+method. This would emit the log line, but <a href=https://github.com/iMacTia/lograge-sql/blob/c8b11e97f2d827b81179b49b7f1dc8bb72b34999/lib/lograge/sql/extension.rb#L14-L27>also clear the
 store</a>.</p><p>However, grepping and rummaging through the <code>lograge</code> code revealed that
 it only
 <a href=https://github.com/roidrage/lograge/blob/2839d2c7786ba8b8cf1acb8ca705be1c3ee66e0d/lib/lograge.rb#L134-L135>activates</a>
